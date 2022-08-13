@@ -15,5 +15,4 @@
 # vendor/
 
 *_test.go
-*.mod
 *.sum
