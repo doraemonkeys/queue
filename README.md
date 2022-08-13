@@ -11,7 +11,7 @@ import (
 	aq "github.com/Doraemonkeys/arrayqueue"
 )
 
-func ExampleQueue() {
+func main() {
 	que := aq.New[int]()
 	que.Push(1)
 	que.Push(2)
