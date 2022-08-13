@@ -1,7 +1,7 @@
 package arrayqueue
 
 //first和last在队列不为空时指向已经有值的位置
-type queue[T any] struct {
+type Queue[T any] struct {
 	data  []T
 	last  int //最新插入的元素
 	first int //最先插入的元素
@@ -21,7 +21,7 @@ type Iterator[T any] interface {
 }
 
 //arrayqueue的迭代器
-type aqIterator[T any] struct {
-	que   *queue[T]
+type AqIterator[T any] struct {
+	que   *Queue[T]
 	index int
 }
