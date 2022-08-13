@@ -2,7 +2,7 @@
 
 # queue - arrayqueue
 
- -The data structure implemented using generics.
+ - The data structure implemented using generics.
 
 ## QuickStart
 
