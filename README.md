@@ -2,6 +2,8 @@
 
 # queue - arrayqueue
 
+ -The data structure implemented using generics.
+
 ## QuickStart
 
 ```go
@@ -40,42 +42,45 @@ func main() {
 
 ## overview
 
-func New[T any]\() *queue[T]
+type AqIterator
+
+func (a *AqIterator[T]) Begin()
+
+func (a *AqIterator[T]) End()
+
+func (a *AqIterator[T]) Index() int
+
+func (a *AqIterator[T]) MoveTo(index int) bool
+
+func (a *AqIterator[T]) Next() bool
+
+func (a *AqIterator[T]) Prev() bool
+
+func (a *AqIterator[T]) Value() T
 
 
+type Queue
 
-func (Q *queue[T]) Back() T
+func New() *Queue[T]
 
-func (Q *queue[T]) Empty() bool
+func (Q *Queue[T]) Back() T
 
-func (Q *queue[T]) Front() T
+func (Q *Queue[T]) Clear()
 
-func (Q *queue[T]) GetValueFromChannel() chan T
+func (Q *Queue[T]) Empty() bool
 
-func (Q *queue[T]) Iterator() *aqIterator[T]
+func (Q *Queue[T]) Front() T
 
-func (Q *queue[T]) Len() int
+func (Q *Queue[T]) GetValueFromChannel() chan T
 
-func (Q *queue[T]) Pop() (value T)
+func (Q *Queue[T]) Iterator() *AqIterator[T]
 
-func (Q *queue[T]) Push(value T)
+func (Q *Queue[T]) Len() int
 
-func (Q *queue[T]) Resize(newCap int)
+func (Q *Queue[T]) Pop() (value T)
 
-func (Q *queue[T]) sendValue(ch chan<- T)
+func (Q *Queue[T]) Push(value T)
 
-
-
-func (a *aqIterator[T]) Begin()
-
-func (a *aqIterator[T]) End()
-
-func (a *aqIterator[T]) Index() int
-
-func (a *aqIterator[T]) Next() bool
-
-func (a *aqIterator[T]) Prev() bool
-
-func (a *aqIterator[T]) Value() T
+func (Q *Queue[T]) Resize(newCap int)
 
 
