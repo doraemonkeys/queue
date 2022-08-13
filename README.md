@@ -1,0 +1,2 @@
+# arrayqueue
+使用golang泛型实现的arrayqueue队列
