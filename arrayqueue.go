@@ -79,6 +79,8 @@ func (Q *Queue[T]) sendValue(ch chan<- T) {
 	close(ch)
 }
 
+//对空队列调用会导致panic,
+//pop不会释放内存，没有太大性能消耗。
 func (Q *Queue[T]) Pop() (value T) {
 	if Q.len == 0 {
 		panic("queue is empty!")
@@ -177,7 +179,8 @@ func min[T minType](a, b T) T {
 //索引为0则程序可能出现了错误。
 
 //返回一个队列的迭代器，默认处于begin的位置。
-//遍历时不要对队列调用Push()和Pop(),否者可能会出现不可预料的错误。
+//遍历时不要对队列调用Push()、Pop()、Resize(),否者可能会出现不可预料的错误,
+//若必须调用这些方法，则需在调用后重新获取迭代器。
 func (Q *Queue[T]) Iterator() *AqIterator[T] {
 	var it = &AqIterator[T]{
 		que:   Q,
@@ -261,6 +264,21 @@ func (a *AqIterator[T]) Prev() bool {
 	a.index = (a.index - 1) % (a.que.cap + 1)
 	if a.index == 0 {
 		a.index = a.que.cap
+	}
+	return true
+}
+
+//将迭代器移动到目标索引(len >= index > 0)的位置，若索引不合法，则迭代器状态不变并返回false
+func (a *AqIterator[T]) MoveTo(index int) bool {
+	if index > a.que.len || index <= 0 {
+		return false
+	}
+	a.Begin()
+	countFirstToSliceEnd := a.que.cap - a.que.first + 1
+	if countFirstToSliceEnd >= index {
+		a.index = index
+	} else {
+		a.index = index - countFirstToSliceEnd
 	}
 	return true
 }
