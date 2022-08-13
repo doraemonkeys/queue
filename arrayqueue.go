@@ -101,6 +101,17 @@ func (Q *Queue[T]) Pop() (value T) {
 	return value
 }
 
+//清空队列
+//Clear不会释放内存，没有太大性能消耗。
+func (Q *Queue[T]) Clear() {
+	if Q.len == 0 {
+		return
+	}
+	Q.len = 0
+	Q.first = 0
+	Q.last = 0
+}
+
 //返回队列第一个元素(最先插入),空队列调用会panic
 func (Q *Queue[T]) Front() T {
 	if Q.len == 0 {
@@ -276,7 +287,7 @@ func (a *AqIterator[T]) MoveTo(index int) bool {
 	a.Begin()
 	countFirstToSliceEnd := a.que.cap - a.que.first + 1
 	if countFirstToSliceEnd >= index {
-		a.index = index
+		a.index = a.que.first + index - 1
 	} else {
 		a.index = index - countFirstToSliceEnd
 	}
