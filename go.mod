@@ -1,4 +1,4 @@
-module github.com/Doraemonkeys/arrayqueue
+module github.com/Doraemonkeys/circularQueue
 
 go 1.18
 
