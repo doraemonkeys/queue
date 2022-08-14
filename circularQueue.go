@@ -147,9 +147,11 @@ func (Q *Queue[T]) Resize(newCap int) {
 	newAq.data = make([]T, newCap+1) //注意第0位不保存元素
 	newAq.cap = newCap
 
-	//队列元素在旧底层切片中最后一个元素的索引
+	//队列元素在旧底层切片中最后一个元素的索引,注意第0位不保存元素
 	endIndex := int(min(int64(Q.len)+int64(Q.first), int64(Q.cap)))
-	copy(newAq.data[1:], Q.data[Q.first:endIndex+1])
+	if endIndex != 0 {
+		copy(newAq.data[1:], Q.data[Q.first:endIndex+1])
+	}
 	count := endIndex - Q.first + 1
 	if newCap > Q.len {
 		//Q.len 为总共的元素，count为已经复制的元素个数
