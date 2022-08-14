@@ -42,45 +42,46 @@ func main() {
 
 ## overview
 
-type AqIterator
+type CqIterator
 
-func (a *AqIterator[T]) Begin()
+    func (c *CqIterator[T]) Begin()
 
-func (a *AqIterator[T]) End()
+    func (c *CqIterator[T]) End()
 
-func (a *AqIterator[T]) Index() int
+    func (c *CqIterator[T]) Index() int
 
-func (a *AqIterator[T]) MoveTo(index int) bool
+    func (c *CqIterator[T]) MoveTo(index int) bool
 
-func (a *AqIterator[T]) Next() bool
+    func (c *CqIterator[T]) Next() bool
 
-func (a *AqIterator[T]) Prev() bool
+    func (c *CqIterator[T]) Prev() bool
 
-func (a *AqIterator[T]) Value() T
+    func (c *CqIterator[T]) Value() T
+
 
 
 type Queue
 
-func New() *Queue[T]
+    func New[T any]() *Queue[T]
 
-func (Q *Queue[T]) Back() T
+    func (Q *Queue[T]) Back() T
 
-func (Q *Queue[T]) Clear()
+    func (Q *Queue[T]) Clear()
 
-func (Q *Queue[T]) Empty() bool
+    func (Q *Queue[T]) Empty() bool
 
-func (Q *Queue[T]) Front() T
+    func (Q *Queue[T]) Front() T
 
-func (Q *Queue[T]) GetValueFromChannel() chan T
+    func (Q *Queue[T]) GetValueFromChannel() chan T
 
-func (Q *Queue[T]) Iterator() *AqIterator[T]
+    func (Q *Queue[T]) Iterator() *CqIterator[T]
 
-func (Q *Queue[T]) Len() int
+    func (Q *Queue[T]) Len() int
 
-func (Q *Queue[T]) Pop() (value T)
+    func (Q *Queue[T]) Pop() (value T)
 
-func (Q *Queue[T]) Push(value T)
-
-func (Q *Queue[T]) Resize(newCap int)
+    func (Q *Queue[T]) Push(value T)
+	
+    func (Q *Queue[T]) Resize(newCap int)
 
 
