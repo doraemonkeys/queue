@@ -136,8 +136,8 @@ func (Q *Queue[T]) Len() int {
 	return Q.len
 }
 
-//重新分配队列底层内存空间,设置容量为n(n最小为2，减少push的判断条件,最大为makeslice的长度)，
-//队列元素在n的范围内保持不变
+//重新分配队列底层内存空间,设置容量为n(为减少push的判断条件,n最小为2,最大为makeslice的长度),
+//队列元素在n的范围内保持不变。
 func (Q *Queue[T]) Resize(newCap int) {
 	//newCap must be non-negative
 	if newCap < 2 {
