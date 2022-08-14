@@ -132,8 +132,14 @@ func (Q *Queue[T]) Empty() bool {
 	return Q.len == 0
 }
 
+//返回队列的长度
 func (Q *Queue[T]) Len() int {
 	return Q.len
+}
+
+//返回队列的容量
+func (Q *Queue[T]) Cap() int {
+	return Q.cap
 }
 
 //重新分配队列底层内存空间,设置容量为n(为减少push的判断条件,n最小为2,最大为makeslice的长度),
