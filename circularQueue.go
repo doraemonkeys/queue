@@ -80,7 +80,7 @@ func (Q *Queue[T]) sendValue(ch chan<- T) {
 }
 
 //对空队列调用会导致panic,
-//pop不会释放内存，没有太大性能消耗。释放内存可以调用Resize()
+//pop不会释放内存，没有太大性能消耗，释放内存可以调用Resize()。
 func (Q *Queue[T]) Pop() (value T) {
 	if Q.len == 0 {
 		panic("queue is empty!")
