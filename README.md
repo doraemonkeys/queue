@@ -1,6 +1,6 @@
 
 
-# queue - arrayqueue
+# queue - circularQueue
 
  - The data structure implemented using generics.
 
@@ -10,11 +10,11 @@
 import (
 	"fmt"
 
-	aq "github.com/Doraemonkeys/arrayqueue"
+	cq "github.com/Doraemonkeys/circularQueue"
 )
 
 func main() {
-	que := aq.New[int]()
+	que := cq.New[int]()
 	que.Push(1)
 	que.Push(2)
 	que.Push(3)

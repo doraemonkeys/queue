@@ -1,4 +1,4 @@
-package arrayqueue
+package circularQueue
 
 //first和last在队列不为空时指向已经有值的位置
 type Queue[T any] struct {
@@ -20,8 +20,8 @@ type Iterator[T any] interface {
 	Value() T
 }
 
-//arrayqueue的迭代器
-type AqIterator[T any] struct {
+//circularQueue的迭代器
+type CqIterator[T any] struct {
 	que   *Queue[T]
 	index int
 }
