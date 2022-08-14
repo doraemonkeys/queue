@@ -23,5 +23,5 @@ type Iterator[T any] interface {
 //circularQueue的迭代器
 type CqIterator[T any] struct {
 	que   *Queue[T]
-	index int
+	index int//此处的index是队列元素在底层切片的实际索引
 }
