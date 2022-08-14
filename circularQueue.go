@@ -1,4 +1,4 @@
-package arrayqueue
+package circularQueue
 
 /*
 除了队列为空的情况，last和first都指向已经有值的位置，
@@ -12,16 +12,16 @@ package arrayqueue
 
 //循环队列，底层是切片，初始容量为100,当使用Pop()发生扩容时,采用与append相同的策略
 func New[T any]() *Queue[T] {
-	var aq Queue[T]
+	var cq Queue[T]
 	initCap := 100                 //初始容量
-	aq.data = make([]T, initCap+1) //第0个位置不放数据
+	cq.data = make([]T, initCap+1) //第0个位置不放数据
 	//第0个位置不放数据
 	//当队列 只有一个值 或 没有值 的时候，first与last是重合的，需要特别注意
-	aq.last = 0
-	aq.first = 0
-	aq.cap = initCap
-	aq.len = 0
-	return &aq
+	cq.last = 0
+	cq.first = 0
+	cq.cap = initCap
+	cq.len = 0
+	return &cq
 }
 
 func (Q *Queue[T]) Push(value T) {
@@ -191,9 +191,14 @@ func min[T minType](a, b T) T {
 
 //返回一个队列的迭代器，默认处于begin的位置。
 //遍历时不要对队列调用Push()、Pop()、Resize(),否者可能会出现不可预料的错误,
-//若必须调用这些方法，则需在调用后重新获取迭代器。
-func (Q *Queue[T]) Iterator() *AqIterator[T] {
-	var it = &AqIterator[T]{
+//若必须调用这些方法，则需在调用后重新获取迭代器,或者通过moveTo移动到原来的位置。
+// e.g.:
+// index := iterator.Index()
+// que.Pop()
+// ok := iterator.MoveTo(index)
+// ......
+func (Q *Queue[T]) Iterator() *CqIterator[T] {
+	var it = &CqIterator[T]{
 		que:   Q,
 		index: -1,
 	}
@@ -201,95 +206,106 @@ func (Q *Queue[T]) Iterator() *AqIterator[T] {
 }
 
 //将迭代器指向第一个元素之前，第一个元素之前index = -1
-func (a *AqIterator[T]) Begin() {
-	a.index = -1
+func (c *CqIterator[T]) Begin() {
+	c.index = -1
 }
 
-//迭代器当前所指元素的索引(第几个元素),计数从1开始,空队列返回0
-func (a *AqIterator[T]) Index() int {
-	if a.index == -1 || a.index == -2 {
+//迭代器当前所指元素的索引(队列中的第几个元素),计数从1开始,空队列返回0
+func (c *CqIterator[T]) Index() int {
+	if c.index == -1 || c.index == -2 {
 		return 0
 	}
 	//按我的设想index不应该为0
-	if a.index >= a.que.first {
-		return a.index - a.que.first + 1
+	if c.index >= c.que.first {
+		return c.index - c.que.first + 1
 	} else {
-		return (a.que.cap - a.que.first + 1) + a.index
+		return (c.que.cap - c.que.first + 1) + c.index
 	}
 }
 
 //将迭代器指向最后一个元素之后,最后一个元素之后index = -2
-func (a *AqIterator[T]) End() {
-	a.index = -2
+func (c *CqIterator[T]) End() {
+	c.index = -2
 }
 
 //迭代器当前所指向元素的值,调用之前应该确保迭代器没有指向队列首部之前或末尾之后
-func (a *AqIterator[T]) Value() T {
-	return a.que.data[a.index]
+func (c *CqIterator[T]) Value() T {
+	return c.que.data[c.index]
 }
 
 //将迭代器指向下一个元素，如果迭代器所指的位置没有下一个元素，则调用Next()后会返回false
-func (a *AqIterator[T]) Next() bool {
+func (c *CqIterator[T]) Next() bool {
 	//最后一个元素之后index = -2，
-	if a.index == -2 {
+	if c.index == -2 {
 		return false
 	}
-	if a.index == -1 {
-		if a.que.len == 0 {
+	if c.index == -1 {
+		if c.que.len == 0 {
 			return false
 		} else {
-			a.index = a.que.first
+			c.index = c.que.first
 			//按我的设想index不应该为0
 			return true
 		}
 	}
-	if a.index == a.que.last {
-		a.index = -2
+	//可能的情况，MoveTo失败且没有进行迭代器归位
+	if c.Index() > c.que.len {
+		c.index = -2
 		return false
 	}
-	a.index = (a.index + 1) % (a.que.cap + 1)
-	if a.index == 0 {
-		a.index = 1
+	//迭代结束
+	if c.index == c.que.last {
+		c.index = -2
+		return false
+	}
+	c.index = (c.index + 1) % (c.que.cap + 1)
+	if c.index == 0 {
+		c.index = 1
 	}
 	return true
 }
 
 //将迭代器指向上一个元素，如果迭代器所指的位置没有上一个元素，则调用Prev()后会返回false
-func (a *AqIterator[T]) Prev() bool {
-	if a.index == -1 {
+func (c *CqIterator[T]) Prev() bool {
+	if c.index == -1 {
 		return false
 	}
-	if a.index == -2 {
-		if a.que.len == 0 {
+	if c.index == -2 {
+		if c.que.len == 0 {
 			return false
 		} else {
-			a.index = a.que.last
+			c.index = c.que.last
 			//按我的设想index不应该为0
 			return true
 		}
 	}
-	if a.index == a.que.first {
-		a.index = -1
+	//可能的情况，MoveTo失败且没有进行迭代器归位
+	if c.Index() > c.que.len {
+		c.index = -1
 		return false
 	}
-	a.index = (a.index - 1) % (a.que.cap + 1)
-	if a.index == 0 {
-		a.index = a.que.cap
+	if c.index == c.que.first {
+		c.index = -1
+		return false
+	}
+	c.index = (c.index - 1) % (c.que.cap + 1)
+	if c.index == 0 {
+		c.index = c.que.cap
 	}
 	return true
 }
 
 //将迭代器移动到目标索引(len >= index > 0)的位置，若索引不合法，则迭代器状态不变并返回false
-func (a *AqIterator[T]) MoveTo(index int) bool {
-	if index > a.que.len || index <= 0 {
+func (c *CqIterator[T]) MoveTo(index int) bool {
+	if index > c.que.len || index <= 0 {
 		return false
 	}
-	a.Begin()
-	countFirstToSliceEnd := a.que.cap - a.que.first + 1
+	c.Begin()
+	countFirstToSliceEnd := c.que.cap - c.que.first + 1
 	if countFirstToSliceEnd >= index {
-		a.index = a.que.first + index - 1
+		c.index = c.que.first + index - 1
 	} else {
-		a.index = index - countFirstToSliceEnd
+		c.index = index - countFirstToSliceEnd
 	}
 	return true
 }
