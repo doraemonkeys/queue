@@ -142,8 +142,8 @@ func (Q *Queue[T]) Cap() int {
 	return Q.cap
 }
 
-//重新分配队列底层内存空间,设置容量为n(为减少push的判断条件,n最小为2,最大为makeslice的长度),
-//队列元素在n的范围内保持不变。
+//重新分配队列底层内存空间,设置容量为newCap(为减少push的判断条件,newCap最小为2,最大为makeslice的长度),
+//队列元素在newCap的范围内保持不变。
 func (Q *Queue[T]) Resize(newCap int) {
 	//newCap must be non-negative
 	if newCap < 2 {
@@ -197,14 +197,15 @@ func min[T minType](a, b T) T {
 //最后一个元素之后index = -2，
 //索引为0则程序可能出现了错误。
 
-//返回一个队列的迭代器，默认处于begin的位置。
-//遍历时不要对队列调用Push()、Pop()、Resize(),否者可能会出现不可预料的错误,
-//若必须调用这些方法，则需在调用后重新获取迭代器,或者通过moveTo移动到原来的位置。
-// e.g.:
-// index := iterator.Index()
-// que.Pop()
-// ok := iterator.MoveTo(index)
-// ......
+// 返回一个队列的迭代器，默认处于begin的位置。
+//  遍历时不要对队列调用 Push()、Pop()、Resize(),否者可能会出现不可预料的错误,
+//  若必须调用这些方法，则需在调用后重新获取迭代器,或者通过 MoveTo()移动到原来的位置。
+//  e.g.:
+//  it := que.Iterator()
+//  index := it.Index()
+//  que.Pop()
+//  success := iterator.MoveTo(index)
+//  ......
 func (Q *Queue[T]) Iterator() *CqIterator[T] {
 	var it = &CqIterator[T]{
 		que:   Q,
