@@ -204,7 +204,7 @@ func min[T minType](a, b T) T {
 //  it := que.Iterator()
 //  index := it.Index()
 //  que.Pop()
-//  success := iterator.MoveTo(index)
+//  success := it.MoveTo(index)
 //  ......
 func (Q *Queue[T]) Iterator() *CqIterator[T] {
 	var it = &CqIterator[T]{
