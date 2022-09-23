@@ -13,7 +13,7 @@ package arrayQueue
 //循环队列，底层是切片，初始容量为100,当使用Pop()发生扩容时,采用与append相同的策略
 func New[T any]() *Queue[T] {
 	var cq Queue[T]
-	initCap := 2                   //初始容量
+	initCap := 1                   //初始容量
 	cq.data = make([]T, initCap+1) //第0个位置不放数据
 	//第0个位置不放数据
 	//当队列 只有一个值 或 没有值 的时候，first与last是重合的，需要特别注意
@@ -26,6 +26,9 @@ func New[T any]() *Queue[T] {
 
 func (Q *Queue[T]) Push(value T) {
 	if Q.len == 0 {
+		if Q.cap == 0 {
+			Q.Resize(1)
+		}
 		Q.data[1] = value
 		//last和first都指向已经有值的位置(没有元素除外)
 		Q.last = 1
@@ -83,7 +86,7 @@ func (Q *Queue[T]) sendValue(ch chan<- T) {
 //pop不会释放内存，没有太大性能消耗，释放内存可以调用Resize()。
 func (Q *Queue[T]) Pop() (value T) {
 	if Q.len == 0 {
-		panic("queue is empty!")
+		panic("queue is empty")
 	}
 	value = Q.data[Q.first]
 	//当队列 只有一个值 或 没有值 的时候，first与last是重合的，需要特别注意
@@ -115,7 +118,7 @@ func (Q *Queue[T]) Clear() {
 //返回队列第一个元素(最先插入),空队列调用会panic
 func (Q *Queue[T]) Front() T {
 	if Q.len == 0 {
-		panic("queue is empty!")
+		panic("queue is empty")
 	}
 	return Q.data[Q.first]
 }
@@ -123,7 +126,7 @@ func (Q *Queue[T]) Front() T {
 //返回队列最后一个元素(最后插入),空队列调用会panic
 func (Q *Queue[T]) Back() T {
 	if Q.len == 0 {
-		panic("queue is empty!")
+		panic("queue is empty")
 	}
 	return Q.data[Q.last]
 }
@@ -142,22 +145,29 @@ func (Q *Queue[T]) Cap() int {
 	return Q.cap
 }
 
-//重新分配队列底层内存空间,设置容量为newCap(为减少push的判断条件,newCap最小为2,最大为makeslice的长度),
+//重新分配队列底层内存空间,设置容量为newCap(newCap最小0,最大为makeslice的长度),
 //队列元素在newCap的范围内保持不变。
 func (Q *Queue[T]) Resize(newCap int) {
 	//newCap must be non-negative
-	if newCap < 2 {
-		newCap = 2
+	if newCap < 0 {
+		panic("newCap must be non-negative")
 	}
 	var newAq Queue[T] = *Q
 	newAq.data = make([]T, newCap+1) //注意第0位不保存元素
 	newAq.cap = newCap
-
+	if newCap == 0 {
+		newAq.len = 0
+		newAq.first = 0
+		newAq.last = 0
+		*Q = newAq
+		return
+	}
 	//队列元素在旧底层切片中最后一个元素的索引,注意第0位不保存元素
 	endIndex := int(min(int64(Q.len)+int64(Q.first), int64(Q.cap)))
 	if endIndex != 0 {
 		copy(newAq.data[1:], Q.data[Q.first:endIndex+1])
 	}
+	//count是已经复制的元素个数，但不一定是全都复制到了新的底层切片中，因为新的底层切片容量可能比count小
 	count := endIndex - Q.first + 1
 	if newCap > Q.len {
 		//Q.len 为总共的元素，count为已经复制的元素个数
@@ -193,10 +203,6 @@ func min[T minType](a, b T) T {
 	return b
 }
 
-//第一个元素之前index = -1，
-//最后一个元素之后index = -2，
-//索引为0则程序可能出现了错误。
-
 // 返回一个队列的迭代器，默认处于begin的位置。
 //  遍历时不要对队列调用 Push()、Pop()、Resize(),否者可能会出现不可预料的错误,
 //  若必须调用这些方法，则需在调用后重新获取迭代器,或者通过 MoveTo()移动到原来的位置。
@@ -208,7 +214,10 @@ func min[T minType](a, b T) T {
 //  ......
 func (Q *Queue[T]) Iterator() *AqIterator[T] {
 	var it = &AqIterator[T]{
-		que:   Q,
+		que: Q,
+		//第一个元素之前index = -1，
+		//最后一个元素之后index = -2，
+		//索引为0则程序可能出现了错误。
 		index: -1,
 	}
 	return it
