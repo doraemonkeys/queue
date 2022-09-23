@@ -46,7 +46,13 @@ func (Q *Queue[T]) Push(value T) {
 		if Q.cap < 1024 {
 			newCap = Q.cap * 2
 		} else {
-			newCap = int(float32(Q.cap) * 1.25)
+			//扩容到原来的1.25倍,超过int的最大值时,扩容到int的最大值
+			newCapF := float32(Q.cap) * 1.25
+			if newCapF > float32(int(^uint(0)>>1)) {
+				newCap = int(^uint(0) >> 1)
+			} else {
+				newCap = int(newCapF)
+			}
 		}
 		Q.Resize(newCap)
 		next = (Q.last + 1) % (Q.cap + 1)
