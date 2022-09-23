@@ -13,7 +13,7 @@ package arrayQueue
 //循环队列，底层是切片，初始容量为100,当使用Pop()发生扩容时,采用与append相同的策略
 func New[T any]() *Queue[T] {
 	var cq Queue[T]
-	initCap := 100                 //初始容量
+	initCap := 2                   //初始容量
 	cq.data = make([]T, initCap+1) //第0个位置不放数据
 	//第0个位置不放数据
 	//当队列 只有一个值 或 没有值 的时候，first与last是重合的，需要特别注意
