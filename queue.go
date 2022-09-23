@@ -1,4 +1,4 @@
-package circularQueue
+package arrayQueue
 
 //推荐通过queue的New()方法获取新队列，若不是，请使用Resize()初始化底层切片
 type Queue[T any] struct {
@@ -20,8 +20,8 @@ type Iterator[T any] interface {
 	Value() T
 }
 
-//circularQueue的迭代器
-type CqIterator[T any] struct {
+//arrayQueue的迭代器
+type AqIterator[T any] struct {
 	que   *Queue[T]
-	index int//此处的index是队列元素在底层切片的实际索引
+	index int //此处的index是队列元素在底层切片的实际索引
 }

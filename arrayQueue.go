@@ -1,4 +1,4 @@
-package circularQueue
+package arrayQueue
 
 /*
 除了队列为空的情况，last和first都指向已经有值的位置，
@@ -206,8 +206,8 @@ func min[T minType](a, b T) T {
 //  que.Pop()
 //  success := it.MoveTo(index)
 //  ......
-func (Q *Queue[T]) Iterator() *CqIterator[T] {
-	var it = &CqIterator[T]{
+func (Q *Queue[T]) Iterator() *AqIterator[T] {
+	var it = &AqIterator[T]{
 		que:   Q,
 		index: -1,
 	}
@@ -215,12 +215,12 @@ func (Q *Queue[T]) Iterator() *CqIterator[T] {
 }
 
 //将迭代器指向第一个元素之前，第一个元素之前index = -1
-func (c *CqIterator[T]) Begin() {
+func (c *AqIterator[T]) Begin() {
 	c.index = -1
 }
 
 //迭代器当前所指元素的索引(队列中的第几个元素),计数从1开始,空队列返回0
-func (c *CqIterator[T]) Index() int {
+func (c *AqIterator[T]) Index() int {
 	if c.index == -1 || c.index == -2 {
 		return 0
 	}
@@ -233,17 +233,17 @@ func (c *CqIterator[T]) Index() int {
 }
 
 //将迭代器指向最后一个元素之后,最后一个元素之后index = -2
-func (c *CqIterator[T]) End() {
+func (c *AqIterator[T]) End() {
 	c.index = -2
 }
 
 //迭代器当前所指向元素的值,调用之前应该确保迭代器没有指向队列首部之前或末尾之后
-func (c *CqIterator[T]) Value() T {
+func (c *AqIterator[T]) Value() T {
 	return c.que.data[c.index]
 }
 
 //将迭代器指向下一个元素，如果迭代器所指的位置没有下一个元素，则调用Next()后会返回false
-func (c *CqIterator[T]) Next() bool {
+func (c *AqIterator[T]) Next() bool {
 	//最后一个元素之后index = -2，
 	if c.index == -2 {
 		return false
@@ -275,7 +275,7 @@ func (c *CqIterator[T]) Next() bool {
 }
 
 //将迭代器指向上一个元素，如果迭代器所指的位置没有上一个元素，则调用Prev()后会返回false
-func (c *CqIterator[T]) Prev() bool {
+func (c *AqIterator[T]) Prev() bool {
 	if c.index == -1 {
 		return false
 	}
@@ -305,7 +305,7 @@ func (c *CqIterator[T]) Prev() bool {
 }
 
 //将迭代器移动到目标索引(len >= index > 0)的位置，若索引不合法，则迭代器状态不变并返回false
-func (c *CqIterator[T]) MoveTo(index int) bool {
+func (c *AqIterator[T]) MoveTo(index int) bool {
 	if index > c.que.len || index <= 0 {
 		return false
 	}
