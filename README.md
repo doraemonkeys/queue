@@ -1,6 +1,6 @@
 
 
-# queue - circularQueue
+# queue - arrayQueue
 
  - The data structure implemented using generics.
 
@@ -10,11 +10,11 @@
 import (
 	"fmt"
 
-	cq "github.com/Doraemonkeys/circularQueue"
+	aq "github.com/Doraemonkeys/arrayQueue"
 )
 
 func main() {
-	que := cq.New[int]()
+	que := aq.New[int]()
 	que.Push(1)
 	que.Push(2)
 	que.Push(3)
@@ -42,21 +42,21 @@ func main() {
 
 ## overview
 
-type CqIterator
+type AqIterator
 
-    func (c *CqIterator[T]) Begin()
+    func (c *AqIterator[T]) Begin()
 
-    func (c *CqIterator[T]) End()
+    func (c *AqIterator[T]) End()
 
-    func (c *CqIterator[T]) Index() int
+    func (c *AqIterator[T]) Index() int
 
-    func (c *CqIterator[T]) MoveTo(index int) bool
+    func (c *AqIterator[T]) MoveTo(index int) bool
 
-    func (c *CqIterator[T]) Next() bool
+    func (c *AqIterator[T]) Next() bool
 
-    func (c *CqIterator[T]) Prev() bool
+    func (c *AqIterator[T]) Prev() bool
 
-    func (c *CqIterator[T]) Value() T
+    func (c *AqIterator[T]) Value() T
 
 
 
