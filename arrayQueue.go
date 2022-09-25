@@ -10,7 +10,7 @@ package arrayQueue
 2.队列中只有一个值的时候调用
 */
 
-//循环队列，底层是切片，初始容量为100,当使用Pop()发生扩容时,采用与append相同的策略
+//循环队列，底层是切片，初始容量为1,当使用Pop()发生扩容时,采用与append相同的策略
 func New[T any]() *Queue[T] {
 	var cq Queue[T]
 	initCap := 1                   //初始容量
