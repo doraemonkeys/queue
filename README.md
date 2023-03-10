@@ -14,7 +14,15 @@
 
 ## QuickStart
 
+```bash
+go get -u github.com/Doraemonkeys/arrayQueue
+```
+
+
+
 ```go
+package main
+
 import (
 	"fmt"
 
@@ -41,7 +49,6 @@ func main() {
 	// 3
 	// 99
 }
-
 ```
 
 
