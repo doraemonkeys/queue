@@ -2,7 +2,15 @@
 
 # queue - arrayQueue
 
- - The data structure implemented using generics.
+[Doc](https://pkg.go.dev/github.com/Doraemonkeys/arrayQueue)
+
+
+
+## Features
+
+- The data structure implemented using generics
+- Higher performance
+- Automatic expanding like slice
 
 ## QuickStart
 
@@ -45,17 +53,17 @@ func main() {
 type AqIterator
 
     func (c *AqIterator[T]) Begin()
-
+    
     func (c *AqIterator[T]) End()
-
+    
     func (c *AqIterator[T]) Index() int
-
+    
     func (c *AqIterator[T]) MoveTo(index int) bool
-
+    
     func (c *AqIterator[T]) Next() bool
-
+    
     func (c *AqIterator[T]) Prev() bool
-
+    
     func (c *AqIterator[T]) Value() T
 
 
@@ -63,25 +71,22 @@ type AqIterator
 type Queue
 
     func New[T any]() *Queue[T]
-
+    
     func (Q *Queue[T]) Back() T
-
+    
     func (Q *Queue[T]) Clear()
-
+    
     func (Q *Queue[T]) Empty() bool
-
+    
     func (Q *Queue[T]) Front() T
-
-    func (Q *Queue[T]) GetValueFromChannel() chan T
-
+    
     func (Q *Queue[T]) Iterator() *CqIterator[T]
-
+    
     func (Q *Queue[T]) Len() int
-
+    
     func (Q *Queue[T]) Pop() (value T)
-
+    
     func (Q *Queue[T]) Push(value T)
-	
+    
     func (Q *Queue[T]) Resize(newCap int)
-
 
