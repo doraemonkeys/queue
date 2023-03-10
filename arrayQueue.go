@@ -11,6 +11,10 @@ package arrayQueue
 */
 
 //循环队列，底层是切片，初始容量为1,当使用Pop()发生扩容时,采用与append相同的策略
+
+// Queue is a circular buffer queue, implemented using a slice.
+// The initial capacity of the queue is one,
+// when using Pop() to expand, the same strategy as append is used.
 func New[T any]() *Queue[T] {
 	var cq Queue[T]
 	initCap := 1                   //初始容量
@@ -63,6 +67,9 @@ func (Q *Queue[T]) Push(value T) {
 }
 
 //直接遍历底层切片发送到channel,可能比迭代器遍历更快
+
+// GetValueFromChannel returns a channel that can be used to iterate over the values of the queue.
+// The channel is closed when all values have been sent.
 func (Q *Queue[T]) GetValueFromChannel() chan T {
 	//fmt.Println("len:", Q.len, "cap:", Q.cap, "last:", Q.last, "first:", Q.first, "front:", Q.data[Q.first])
 	if Q.len == 0 {
@@ -90,6 +97,11 @@ func (Q *Queue[T]) sendValue(ch chan<- T) {
 
 //对空队列调用会导致panic,
 //pop不会释放内存，没有太大性能消耗，释放内存可以调用Resize()。
+
+// Pop removes and returns the first element of the queue.
+// It panics if the queue is empty.
+// Pop does not release memory, there is no significant performance loss,
+// and memory can be released by calling Resize().
 func (Q *Queue[T]) Pop() (value T) {
 	if Q.len == 0 {
 		panic("queue is empty")
@@ -112,6 +124,10 @@ func (Q *Queue[T]) Pop() (value T) {
 
 //清空队列
 //Clear不会释放内存，没有太大性能消耗。
+
+// Clear removes all elements from the queue.
+// Clear does not release memory, there is no significant performance loss,
+// and memory can be released by calling Resize().
 func (Q *Queue[T]) Clear() {
 	if Q.len == 0 {
 		return
@@ -122,6 +138,9 @@ func (Q *Queue[T]) Clear() {
 }
 
 //返回队列第一个元素(最先插入),空队列调用会panic
+
+// Front returns the first element of the queue.
+// It panics if the queue is empty.
 func (Q *Queue[T]) Front() T {
 	if Q.len == 0 {
 		panic("queue is empty")
@@ -130,6 +149,9 @@ func (Q *Queue[T]) Front() T {
 }
 
 //返回队列最后一个元素(最后插入),空队列调用会panic
+
+// Back returns the last element of the queue.
+// It panics if the queue is empty.
 func (Q *Queue[T]) Back() T {
 	if Q.len == 0 {
 		panic("queue is empty")
@@ -137,22 +159,31 @@ func (Q *Queue[T]) Back() T {
 	return Q.data[Q.last]
 }
 
+// Empty returns true if the queue is empty.
 func (Q *Queue[T]) Empty() bool {
 	return Q.len == 0
 }
 
 //返回队列的长度
+
+// Len returns the number of elements of the queue.
 func (Q *Queue[T]) Len() int {
 	return Q.len
 }
 
 //返回队列的容量
+
+// Cap returns the capacity of the queue.
 func (Q *Queue[T]) Cap() int {
 	return Q.cap
 }
 
 //重新分配队列底层内存空间,设置容量为newCap(newCap最小0,最大为makeslice的长度),
 //队列元素在newCap的范围内保持不变。
+
+// Resize resizes the queue to the specified capacity.
+// The capacity must be non-negative.
+// The elements in the queue are kept within the new capacity.
 func (Q *Queue[T]) Resize(newCap int) {
 	//newCap must be non-negative
 	if newCap < 0 {
@@ -218,6 +249,19 @@ func min[T minType](a, b T) T {
 //  que.Pop()
 //  success := it.MoveTo(index)
 //  ......
+
+// Iterator returns an iterator of the queue.
+// The iterator is at the begin position by default.
+// Do not call Push(), Pop(), Resize() on the queue while iterating,
+// otherwise it may cause unpredictable errors.
+// If you must call these methods, you need to get the iterator again,
+// or move the iterator to the original position by calling MoveTo().
+//  e.g.:
+//  it := que.Iterator()
+//  index := it.Index()
+//  que.Pop()
+//  success := it.MoveTo(index)
+//  ......
 func (Q *Queue[T]) Iterator() *AqIterator[T] {
 	var it = &AqIterator[T]{
 		que: Q,
@@ -230,11 +274,17 @@ func (Q *Queue[T]) Iterator() *AqIterator[T] {
 }
 
 //将迭代器指向第一个元素之前，第一个元素之前index = -1
+
+// Begin moves the iterator to the position before the first element.
 func (c *AqIterator[T]) Begin() {
 	c.index = -1
 }
 
 //迭代器当前所指元素的索引(队列中的第几个元素),计数从1开始,空队列返回0
+
+// Index returns the index of the element the iterator points to.
+// The index is counted from 1.
+// It returns 0 if the queue is empty.
 func (c *AqIterator[T]) Index() int {
 	if c.index == -1 || c.index == -2 {
 		return 0
@@ -248,16 +298,24 @@ func (c *AqIterator[T]) Index() int {
 }
 
 //将迭代器指向最后一个元素之后,最后一个元素之后index = -2
+
+// End moves the iterator to the position after the last element.
 func (c *AqIterator[T]) End() {
 	c.index = -2
 }
 
 //迭代器当前所指向元素的值,调用之前应该确保迭代器没有指向队列首部之前或末尾之后
+
+// Value returns the value of the element the iterator points to.
+// It panics if the iterator points to the position before the first element or after the last element.
 func (c *AqIterator[T]) Value() T {
 	return c.que.data[c.index]
 }
 
 //将迭代器指向下一个元素，如果迭代器所指的位置没有下一个元素，则调用Next()后会返回false
+
+// Next moves the iterator to the next element and returns true.
+// It returns false if there is no next element.
 func (c *AqIterator[T]) Next() bool {
 	//最后一个元素之后index = -2，
 	if c.index == -2 {
@@ -290,6 +348,9 @@ func (c *AqIterator[T]) Next() bool {
 }
 
 //将迭代器指向上一个元素，如果迭代器所指的位置没有上一个元素，则调用Prev()后会返回false
+
+// Prev moves the iterator to the previous element and returns true.
+// It returns false if there is no previous element.
 func (c *AqIterator[T]) Prev() bool {
 	if c.index == -1 {
 		return false
@@ -320,6 +381,10 @@ func (c *AqIterator[T]) Prev() bool {
 }
 
 //将迭代器移动到目标索引(len >= index > 0)的位置，若索引不合法，则迭代器状态不变并返回false
+
+// MoveTo moves the iterator to the position of the specified index.
+// The index is counted from 1.
+// It returns false if the index is invalid.
 func (c *AqIterator[T]) MoveTo(index int) bool {
 	if index > c.que.len || index <= 0 {
 		return false
