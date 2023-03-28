@@ -1,8 +1,8 @@
 
 
-# queue - arrayQueue
+# arrayQueue、circularBuffer、priorityQueue
 
-[Doc](https://pkg.go.dev/github.com/Doraemonkeys/arrayQueue)
+[Doc](https://pkg.go.dev/github.com/Doraemonkeys/queue)
 
 
 
@@ -10,12 +10,12 @@
 
 - The data structure implemented using generics
 - Higher performance
-- Automatic expanding like slice
+- arrayQueue is scalable, automatic expanding like slice
 
 ## QuickStart
 
 ```bash
-go get -u github.com/Doraemonkeys/arrayQueue
+go get -u github.com/Doraemonkeys/queue/arrayQueue
 ```
 
 
@@ -26,7 +26,7 @@ package main
 import (
 	"fmt"
 
-	aq "github.com/Doraemonkeys/arrayQueue"
+	aq "github.com/Doraemonkeys/queue/arrayQueue"
 )
 
 func main() {
@@ -55,45 +55,15 @@ func main() {
 
 
 
-## overview
-
-type AqIterator
-
-    func (c *AqIterator[T]) Begin()
-    
-    func (c *AqIterator[T]) End()
-    
-    func (c *AqIterator[T]) Index() int
-    
-    func (c *AqIterator[T]) MoveTo(index int) bool
-    
-    func (c *AqIterator[T]) Next() bool
-    
-    func (c *AqIterator[T]) Prev() bool
-    
-    func (c *AqIterator[T]) Value() T
 
 
 
-type Queue
 
-    func New[T any]() *Queue[T]
-    
-    func (Q *Queue[T]) Back() T
-    
-    func (Q *Queue[T]) Clear()
-    
-    func (Q *Queue[T]) Empty() bool
-    
-    func (Q *Queue[T]) Front() T
-    
-    func (Q *Queue[T]) Iterator() *CqIterator[T]
-    
-    func (Q *Queue[T]) Len() int
-    
-    func (Q *Queue[T]) Pop() (value T)
-    
-    func (Q *Queue[T]) Push(value T)
-    
-    func (Q *Queue[T]) Resize(newCap int)
+
+
+
+
+
+
+
 

@@ -1,4 +1,4 @@
-module github.com/Doraemonkeys/arrayQueue
+module github.com/Doraemonkeys/queue
 
 go 1.18
 
