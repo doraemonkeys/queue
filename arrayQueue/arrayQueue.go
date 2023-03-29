@@ -68,6 +68,7 @@ func (Q *Queue[T]) Push(value T) {
 	}
 	//容量已满,进行扩容
 	if next == Q.first {
+		// 扩容策略与append相同，不使用append是因为first和last的位置不固定
 		newCap := 0
 		if Q.cap < 1024 {
 			newCap = Q.cap * 2
