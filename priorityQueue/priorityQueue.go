@@ -40,6 +40,11 @@ func (pq *PriorityQueue[T]) Len() int {
 	return len(pq.heap)
 }
 
+// Cap returns the capacity of the priority queue.
+func (pq *PriorityQueue[T]) Cap() int {
+	return cap(pq.heap)
+}
+
 // IsEmpty checks whether priority queue has no elements.
 func (pq *PriorityQueue[T]) IsEmpty() bool {
 	return len(pq.heap) == 0
