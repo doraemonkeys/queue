@@ -1,15 +1,5 @@
 package circularBuffer
 
-/*
-除了队列为空的情况，last和first都指向已经有值的位置，
-当队列 只有一个值 或 没有值 的时候，first与last都是是重合的，
-当队列 只有一个值 的时候，first与last是重合的，但位置不固定
-当队列 没有值 的时候，last和first都指向0
-每个函数都要考虑的边界情况：
-1.空队列调用
-2.队列中只有一个值的时候调用
-*/
-
 //推荐通过New()方法获取，若不是，请使用Resize()初始化底层切片
 
 // Recommand to get a new circularBuffer by New() method,
