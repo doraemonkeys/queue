@@ -2,6 +2,8 @@
 
 # arrayQueue、circularBuffer、priorityQueue
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/doraemonkeys/queue.svg)](https://pkg.go.dev/github.com/doraemonkeys/queue) [![Go Report Card](https://goreportcard.com/badge/github.com/doraemonkeys/queue)](https://goreportcard.com/report/github.com/doraemonkeys/queue)
+
 ## Features
 
 - The data structure implemented using generics
