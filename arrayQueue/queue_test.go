@@ -39,7 +39,7 @@ func TestQueue(t *testing.T) { //参数t用于报告测试失败和附加的日�
 		{"pop", 2003},
 	}
 	for _, v := range tests {
-		fmt.Println("strat", v.op, v.n)
+		fmt.Println("start", v.op, v.n)
 		if v.op == "push" {
 			for i := 0; i < v.n; i++ {
 				que.Enqueue(i + 1)
@@ -205,7 +205,7 @@ func TestQueue2(t *testing.T) {
 		{"push", 50},
 	}
 	for _, v := range tests {
-		fmt.Println("strat", v.op, v.n)
+		fmt.Println("start", v.op, v.n)
 		if v.op == "push" {
 			for i := 0; i < v.n; i++ {
 				myque2.Push(i + 1)
