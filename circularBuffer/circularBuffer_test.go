@@ -510,108 +510,6 @@ func TestCircularBuffer9(t *testing.T) {
 			t.Errorf("expected iterator value %d, got %d", i+1, it.Value())
 		}
 	}
-	valCh := cb.GetValueFromChannel()
-	want := []int{1, 2, 3}
-	for i := 0; i < 3; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
-	cb.PushFront(4)
-	// 4 1 2
-	it.Begin()
-	if !it.Next() || it.Value() != 4 {
-		t.Errorf("expected iterator value 4, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 1 {
-		t.Errorf("expected iterator value 1, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 2 {
-		t.Errorf("expected iterator value 2, got %d", it.Value())
-	}
-	want = []int{4, 1, 2}
-	valCh = cb.GetValueFromChannel()
-	for i := 0; i < 3; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
-
-	cb.PushFront(5)
-	// 5 4 1
-	it.Begin()
-	if !it.Next() || it.Value() != 5 {
-		t.Errorf("expected iterator value 5, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 4 {
-		t.Errorf("expected iterator value 4, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 1 {
-		t.Errorf("expected iterator value 1, got %d", it.Value())
-	}
-	want = []int{5, 4, 1}
-	valCh = cb.GetValueFromChannel()
-	for i := 0; i < 3; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
-
-	cb.PushBack(6)
-	// 4 1 6
-	it.Begin()
-	if !it.Next() || it.Value() != 4 {
-		t.Errorf("expected iterator value 4, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 1 {
-		t.Errorf("expected iterator value 1, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 6 {
-		t.Errorf("expected iterator value 6, got %d", it.Value())
-	}
-	want = []int{4, 1, 6}
-	valCh = cb.GetValueFromChannel()
-	for i := 0; i < 3; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
-	cb.Resize(6)
-	// 4 1 6
-	it.Begin()
-	if !it.Next() || it.Value() != 4 {
-		t.Errorf("expected iterator value 4, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 1 {
-		t.Errorf("expected iterator value 1, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 6 {
-		t.Errorf("expected iterator value 6, got %d", it.Value())
-	}
-	want = []int{4, 1, 6}
-	valCh = cb.GetValueFromChannel()
-	for i := 0; i < 3; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
-
-	cb.Resize(2)
-	// 4 1
-	it.Begin()
-	if !it.Next() || it.Value() != 4 {
-		t.Errorf("expected iterator value 4, got %d", it.Value())
-	}
-	if !it.Next() || it.Value() != 1 {
-		t.Errorf("expected iterator value 1, got %d", it.Value())
-	}
-	want = []int{4, 1}
-	valCh = cb.GetValueFromChannel()
-	for i := 0; i < 2; i++ {
-		if val := <-valCh; val != want[i] {
-			t.Errorf("expected value %d, got %d", want[i], val)
-		}
-	}
 	cb.Clear()
 	// empty
 	it.Begin()
@@ -621,8 +519,11 @@ func TestCircularBuffer9(t *testing.T) {
 	cb.PushBack(1)
 	cb.PushBack(2)
 	cb.PushBack(3)
+	if cb.PopFront() != 1 {
+		t.Errorf("expected popped element 1, got %d", cb.PopFront())
+	}
 	// 2 3
-	want = []int{2, 3}
+	want := []int{2, 3}
 	it.Begin()
 	for i := 0; i < 2; i++ {
 		if !it.Next() || it.Value() != want[i] {

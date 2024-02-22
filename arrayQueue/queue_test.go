@@ -96,13 +96,6 @@ func TestQueue(t *testing.T) { //参数t用于报告测试失败和附加的日�
 			t.Errorf("expected:%v, got:%v", false, true)
 		}
 		queIt.Begin()
-		ch := myque.GetValueFromChannel()
-		for v := range ch {
-			queIt.Next()
-			if queIt.Value() != v {
-				t.Errorf("expected:%v, got:%v", queIt.Value(), v)
-			}
-		}
 		if que.Empty() != myque.Empty() {
 			t.Errorf("expected:%v, got:%v", que.Empty(), myque.Empty())
 		}

@@ -89,35 +89,6 @@ func (Q *Buffer[T]) PushFront(value T) {
 	Q.first = next
 }
 
-//直接遍历底层切片发送到channel,可能比迭代器遍历更快
-
-// GetValueFromChannel returns a channel that can be used to iterate over the values of the queue.
-// The channel is closed when all values have been sent.
-func (Q *Buffer[T]) GetValueFromChannel() chan T {
-	//fmt.Println("len:", Q.len, "cap:", Q.cap, "last:", Q.last, "first:", Q.first, "front:", Q.data[Q.first])
-	if Q.len == 0 {
-		//fmt.Println("空队列")
-		ch := make(chan T, Q.len)
-		close(ch)
-		return ch
-	}
-	ch := make(chan T, Q.len)
-	go Q.sendValue(ch)
-	return ch
-}
-
-func (Q *Buffer[T]) sendValue(ch chan<- T) {
-	temp := Q.first
-	for i := 0; i < Q.len; i++ {
-		ch <- Q.data[temp]
-		temp = (temp + 1) % (Q.cap + 1)
-		if temp == 0 {
-			temp = 1
-		}
-	}
-	close(ch)
-}
-
 // PopFront removes and returns the first element of the circularBuffer.
 // It panics if the circularBuffer is empty.
 // PopFront does not release memory, there is no significant performance loss,
