@@ -1,8 +1,8 @@
 package priorityQueue
 
 import (
-	"github.com/Doraemonkeys/queue"
-	"github.com/Doraemonkeys/queue/heap"
+	"github.com/doraemonkeys/queue"
+	"github.com/doraemonkeys/queue/heap"
 )
 
 // PriorityQueue is an queue with priority.

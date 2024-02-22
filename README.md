@@ -11,7 +11,7 @@
 ## QuickStart - arrayQueue
 
 ```bash
-go get -u github.com/Doraemonkeys/queue/arrayQueue
+go get -u github.com/doraemonkeys/queue/arrayQueue
 ```
 
 
@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 
-	aq "github.com/Doraemonkeys/queue/arrayQueue"
+	aq "github.com/doraemonkeys/queue/arrayQueue"
 )
 
 func main() {
@@ -57,7 +57,7 @@ package main
 import (
 	"fmt"
 
-	cb "github.com/Doraemonkeys/queue/circularBuffer"
+	cb "github.com/doraemonkeys/queue/circularBuffer"
 )
 
 func main() {
@@ -91,7 +91,7 @@ package main
 import (
 	"fmt"
 
-	pq "github.com/Doraemonkeys/queue/priorityQueue"
+	pq "github.com/doraemonkeys/queue/priorityQueue"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/Doraemonkeys/queue
+module github.com/doraemonkeys/queue
 
 go 1.18
 

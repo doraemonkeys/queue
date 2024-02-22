@@ -1,6 +1,6 @@
 package heap
 
-import "github.com/Doraemonkeys/queue"
+import "github.com/doraemonkeys/queue"
 
 func heapSwap[T any](heap []T, i, j int) {
 	heap[i], heap[j] = heap[j], heap[i]
