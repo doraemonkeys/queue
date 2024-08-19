@@ -7,7 +7,6 @@ import (
 	cq "github.com/emirpasic/gods/queues/circularbuffer"
 )
 
-// Benchmark 基准测试 性能爆炸
 func BenchmarkMyQueue(b *testing.B) {
 	var myque *Queue[int] = New[int]()
 	myque.Resize(1000000)

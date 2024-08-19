@@ -17,7 +17,7 @@ type operate struct {
 // 	{"pop", 1},
 // }
 
-func TestQueue(t *testing.T) { //参数t用于报告测试失败和附加的日志信息
+func TestQueue(t *testing.T) {
 	var que = aq.New()
 	var myque *Queue[int] = New[int]()
 	var tests = []operate{
@@ -829,11 +829,3 @@ func Test_Resize(t *testing.T) {
 		t.Errorf("expected:%v, got:%v", 2, que.Back())
 	}
 }
-
-//执行的命令
-//go test
-//go test -v                          看到具体的测试用例
-//go test -run=Split/chinese          执行某一个用例
-//go test -cover                      测试覆盖率
-//go test -cover -coverprofile c.out  测试数据输出到c.out     profile n. 侧面,轮廓,配置文件
-//go tool cover -html c.out //使用go tool工具,找到cover ,以html的方式打开c.out
