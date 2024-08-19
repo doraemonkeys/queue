@@ -1,6 +1,8 @@
 package heap
 
-import "github.com/doraemonkeys/queue"
+import (
+	"github.com/doraemonkeys/queue"
+)
 
 func heapSwap[T any](heap []T, i, j int) {
 	heap[i], heap[j] = heap[j], heap[i]
@@ -71,6 +73,10 @@ func RemoveHeap[T any](heap *[]T, i int, less queue.LessFn[T]) T {
 	return h[n]
 }
 
+func HeapTop[T any](heap []T) T {
+	return heap[0]
+}
+
 func heapUp[T any](heap []T, j int, less queue.LessFn[T]) {
 	for {
 		i := (j - 1) / 2 // parent
@@ -82,16 +88,39 @@ func heapUp[T any](heap []T, j int, less queue.LessFn[T]) {
 	}
 }
 
+// heapDown maintains the heap property by moving the element at index i0
+// downwards in the heap until it is in the correct position.
+//
+// Parameters:
+// heap - a slice of type T representing the heap.
+// i0 - the index of the element to be moved down.
+// n - the number of elements in the heap.
+//
+// Returns:
+// A boolean indicating whether the element at index i0 was moved.
+//
+// The function works as follows:
+//  1. Start with the element at index i0.
+//  2. Loop until the element is in the correct position:
+//     a. Calculate the index of the left child (j1).
+//     b. If j1 is out of bounds, break the loop.
+//     c. Assume the left child (j1) is the smaller child.
+//     d. Check if there is a right child (j2) and if it is smaller than the left child.
+//     If so, update j to be j2.
+//     e. If the current element is less than or equal to the smallest child, break the loop.
+//     f. Swap the current element with the smallest child.
+//     g. Update the current index to be the index of the smallest child.
+//  3. Return true if the element was moved from its original position.
 func heapDown[T any](heap []T, i0, n int, less queue.LessFn[T]) bool {
 	i := i0
 	for {
-		j1 := 2*i + 1
+		j1 := 2*i + 1          // left child
 		if j1 >= n || j1 < 0 { // j1 < 0 after int overflow
 			break
 		}
-		j := j1 // left child
+		j := j1
 		if j2 := j1 + 1; j2 < n && less(heap[j2], heap[j1]) {
-			j = j2 // = 2*i + 2  // right child
+			j = j2 // = 2*i + 2  right child
 		}
 		if !less(heap[j], heap[i]) {
 			break
@@ -100,4 +129,25 @@ func heapDown[T any](heap []T, i0, n int, less queue.LessFn[T]) bool {
 		i = j
 	}
 	return i > i0
+}
+
+// LevelOrder performs a level-order traversal of a heap represented as a slice.
+// It returns a 2D slice where each inner slice represents a level of the tree.
+func LevelOrder[T any](heap []T) [][]T {
+	if len(heap) == 0 {
+		return nil
+	}
+
+	var result [][]T
+	level := 0
+	for start := 0; start < len(heap); {
+		// Calculate the end index for the current level
+		// The total nodes up to level n is 2^(n+1)-1
+		end := min(len(heap), 1<<(level+1)-1)
+		result = append(result, heap[start:end])
+		start = end
+		// Move to the next level
+		level++
+	}
+	return result
 }
