@@ -531,3 +531,610 @@ func TestCircularBuffer9(t *testing.T) {
 		}
 	}
 }
+
+func TestResize(t *testing.T) {
+	t.Run("Resize to larger capacity", func(t *testing.T) {
+		buf := New[int](5)
+		for i := 1; i <= 5; i++ {
+			buf.PushBack(i)
+		}
+		buf.Resize(10)
+		if buf.Cap() != 10 {
+			t.Errorf("Expected capacity 10, got %d", buf.Cap())
+		}
+		if buf.Len() != 5 {
+			t.Errorf("Expected length 5, got %d", buf.Len())
+		}
+		for i := 1; i <= 5; i++ {
+			if buf.PopFront() != i {
+				t.Errorf("Expected %d, got %d", i, buf.PopFront())
+			}
+		}
+	})
+
+	t.Run("Resize to smaller capacity", func(t *testing.T) {
+		buf := New[int](10)
+		for i := 1; i <= 10; i++ {
+			buf.PushBack(i)
+		}
+		buf.Resize(5)
+		if buf.Cap() != 5 {
+			t.Errorf("Expected capacity 5, got %d", buf.Cap())
+		}
+		if buf.Len() != 5 {
+			t.Errorf("Expected length 5, got %d", buf.Len())
+		}
+		for i := 1; i <= 5; i++ {
+			if buf.PopFront() != i {
+				t.Errorf("Expected %d, got %d", i, buf.PopFront())
+			}
+		}
+	})
+
+	t.Run("Resize to same capacity", func(t *testing.T) {
+		buf := New[int](5)
+		for i := 1; i <= 5; i++ {
+			buf.PushBack(i)
+		}
+		buf.Resize(5)
+		if buf.Cap() != 5 {
+			t.Errorf("Expected capacity 5, got %d", buf.Cap())
+		}
+		if buf.Len() != 5 {
+			t.Errorf("Expected length 5, got %d", buf.Len())
+		}
+		for i := 1; i <= 5; i++ {
+			if buf.PopFront() != i {
+				t.Errorf("Expected %d, got %d", i, buf.PopFront())
+			}
+		}
+	})
+
+	t.Run("Resize empty buffer", func(t *testing.T) {
+		buf := New[int](5)
+		buf.Resize(10)
+		if buf.Cap() != 10 {
+			t.Errorf("Expected capacity 10, got %d", buf.Cap())
+		}
+		if buf.Len() != 0 {
+			t.Errorf("Expected length 0, got %d", buf.Len())
+		}
+	})
+
+	t.Run("Resize with wrapped elements", func(t *testing.T) {
+		buf := New[int](5)
+		for i := 1; i <= 5; i++ {
+			buf.PushBack(i)
+		}
+		buf.PopFront() // Remove 1
+		buf.PopFront() // Remove 2
+		buf.PushBack(6)
+		buf.PushBack(7)
+		buf.Resize(7)
+		if buf.Cap() != 7 {
+			t.Errorf("Expected capacity 7, got %d", buf.Cap())
+		}
+		if buf.Len() != 5 {
+			t.Errorf("Expected length 5, got %d", buf.Len())
+		}
+		expected := []int{3, 4, 5, 6, 7}
+		for _, v := range expected {
+			if buf.PopFront() != v {
+				t.Errorf("Expected %d, got %d", v, buf.PopFront())
+			}
+		}
+	})
+
+	t.Run("Resize to 1", func(t *testing.T) {
+		buf := New[int](5)
+		for i := 1; i <= 5; i++ {
+			buf.PushBack(i)
+		}
+		buf.Resize(1)
+		if buf.Cap() != 1 {
+			t.Errorf("Expected capacity 1, got %d", buf.Cap())
+		}
+		if buf.Len() != 1 {
+			t.Errorf("Expected length 1, got %d", buf.Len())
+		}
+		if buf.PopFront() != 1 {
+			t.Errorf("Expected 5, got %d", buf.PopFront())
+		}
+	})
+
+	t.Run("Panic on resize to 0", func(t *testing.T) {
+		buf := New[int](5)
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+		buf.Resize(0)
+	})
+
+	t.Run("Panic on resize to negative", func(t *testing.T) {
+		buf := New[int](5)
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+		buf.Resize(-1)
+	})
+
+	t.Run("Resize with wrapped elements and partial copy", func(t *testing.T) {
+		buf := New[int](7)
+		// 填充缓冲区并使其环绕
+		for i := 1; i <= 7; i++ {
+			buf.PushBack(i)
+		}
+		// 移除前两个元素并添加两个新元素,使缓冲区环绕
+		buf.PopFront() // 移除 1
+		buf.PopFront() // 移除 2
+		buf.PushBack(8)
+		buf.PushBack(9)
+
+		// 此时缓冲区状态: [8 9 3 4 5 6 7]
+		//                     ^first
+
+		// 调整大小到触发部分复制逻辑
+		buf.Resize(6)
+
+		if buf.Cap() != 6 {
+			t.Errorf("Expected capacity 5, got %d", buf.Cap())
+		}
+		if buf.Len() != 6 {
+			t.Errorf("Expected length 5, got %d", buf.Len())
+		}
+
+		// 验证元素
+		expected := []int{3, 4, 5, 6, 7, 8}
+		for i, v := range expected {
+			if got := buf.PopFront(); got != v {
+				t.Errorf("At index %d: expected %d, got %d", i, v, got)
+			}
+		}
+
+		if !buf.Empty() {
+			t.Errorf("Buffer should be empty after popping all elements")
+		}
+	})
+}
+
+func TestIterator(t *testing.T) {
+	// 创建一个容量为5的Buffer
+	cb := New[int](5)
+
+	// 测试空Buffer的迭代器
+	t.Run("Empty Buffer", func(t *testing.T) {
+		it := cb.Iterator()
+		if it.Index() != 0 {
+			t.Errorf("Expected index 0 for empty buffer, got %d", it.Index())
+		}
+		if it.Next() {
+			t.Error("Next() should return false for empty buffer")
+		}
+		if it.Prev() {
+			t.Error("Prev() should return false for empty buffer")
+		}
+	})
+
+	// 添加元素并测试
+	cb.PushBack(1)
+	cb.PushBack(2)
+	cb.PushBack(3)
+
+	t.Run("Filled Buffer", func(t *testing.T) {
+		it := cb.Iterator()
+
+		// 测试Begin()和Index()
+		it.Begin()
+		if it.Index() != 0 {
+			t.Errorf("Expected index 0 after Begin(), got %d", it.Index())
+		}
+
+		// 测试Next()和Value()
+		expected := []int{1, 2, 3}
+		for i, exp := range expected {
+			if !it.Next() {
+				t.Errorf("Next() returned false at index %d", i)
+			}
+			if it.Value() != exp {
+				t.Errorf("Expected value %d at index %d, got %d", exp, i, it.Value())
+			}
+			if it.Index() != i+1 {
+				t.Errorf("Expected index %d, got %d", i+1, it.Index())
+			}
+		}
+
+		// 测试End()
+		it.End()
+		if it.Next() {
+			t.Error("Next() should return false after End()")
+		}
+
+		// 测试Prev()
+		for i := len(expected) - 1; i >= 0; i-- {
+			if !it.Prev() {
+				t.Errorf("Prev() returned false at index %d", i)
+			}
+			if it.Value() != expected[i] {
+				t.Errorf("Expected value %d at index %d, got %d", expected[i], i, it.Value())
+			}
+		}
+
+		if it.Prev() {
+			t.Error("Prev() should return false at the beginning")
+		}
+	})
+
+	t.Run("MoveTo", func(t *testing.T) {
+		it := cb.Iterator()
+
+		// 测试有效移动
+		if !it.MoveTo(2) {
+			t.Error("MoveTo(2) should return true")
+		}
+		if it.Value() != 2 {
+			t.Errorf("Expected value 2 after MoveTo(2), got %d", it.Value())
+		}
+
+		// 测试无效移动
+		if it.MoveTo(0) {
+			t.Error("MoveTo(0) should return false")
+		}
+		if it.MoveTo(4) {
+			t.Error("MoveTo(4) should return false")
+		}
+	})
+
+	t.Run("Wraparound", func(t *testing.T) {
+		// 填满Buffer并造成环绕
+		cb.PushBack(4)
+		cb.PushBack(5)
+		cb.PushBack(6) // 这会导致1被覆盖
+
+		it := cb.Iterator()
+		expected := []int{2, 3, 4, 5, 6}
+
+		for i, exp := range expected {
+			if !it.Next() {
+				t.Errorf("Next() returned false at index %d", i)
+			}
+			if it.Value() != exp {
+				t.Errorf("Expected value %d at index %d, got %d", exp, i, it.Value())
+			}
+		}
+
+		if it.Next() {
+			t.Error("Next() should return false after last element")
+		}
+	})
+}
+
+// 辅助函数:创建一个包含给定元素的Buffer
+func createBuffer(elements ...int) *Buffer[int] {
+	buffer := New[int](len(elements))
+	for _, e := range elements {
+		buffer.PushBack(e)
+	}
+	return buffer
+}
+
+// 测试Iterator()方法
+func TestIterator2(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+
+	if it.index != -1 {
+		t.Errorf("Iterator should start at index -1, got %d", it.index)
+	}
+}
+
+// 测试Begin()方法
+func TestBegin(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+	it.Next()
+	it.Begin()
+
+	if it.index != -1 {
+		t.Errorf("Begin() should set index to -1, got %d", it.index)
+	}
+}
+
+// 测试Index()方法
+func TestIndex(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+
+	if idx := it.Index(); idx != 0 {
+		t.Errorf("Index() should return 0 for iterator at beginning, got %d", idx)
+	}
+
+	it.Next()
+	if idx := it.Index(); idx != 1 {
+		t.Errorf("Index() should return 1 for first element, got %d", idx)
+	}
+
+	it.End()
+	if idx := it.Index(); idx != 0 {
+		t.Errorf("Index() should return 0 for iterator at end, got %d", idx)
+	}
+
+	expectedPrevEle := []int{3, 2, 1}
+	for i, exp := range expectedPrevEle {
+		if !it.Prev() {
+			t.Errorf("Prev() should return true at index %d", i)
+		}
+		if it.Value() != exp {
+			t.Errorf("Expected value %d at index %d, got %d", exp, i, it.Value())
+		}
+	}
+}
+
+// 测试End()方法
+func TestEnd(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+	it.End()
+
+	if it.index != -2 {
+		t.Errorf("End() should set index to -2, got %d", it.index)
+	}
+}
+
+// 测试Value()方法
+func TestValue(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+	it.Next()
+
+	if value := it.Value(); value != 1 {
+		t.Errorf("Value() should return 1, got %d", value)
+	}
+}
+
+// 测试Next()方法
+func TestNext(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+
+	if !it.Next() {
+		t.Error("Next() should return true for first element")
+	}
+	if it.Value() != 1 {
+		t.Errorf("Next() should move to first element (1), got %d", it.Value())
+	}
+
+	it.Next()
+	it.Next()
+	if it.Next() {
+		t.Error("Next() should return false after last element")
+	}
+}
+
+// 测试Prev()方法
+func TestPrev(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+	it.End()
+
+	if !it.Prev() {
+		t.Error("Prev() should return true for last element")
+	}
+	if it.Value() != 3 {
+		t.Errorf("Prev() should move to last element (3), got %d", it.Value())
+	}
+
+	it.Prev()
+	it.Prev()
+	if it.Prev() {
+		t.Error("Prev() should return false before first element")
+	}
+}
+
+// 测试MoveTo()方法
+func TestMoveTo(t *testing.T) {
+	buffer := createBuffer(1, 2, 3, 4, 5)
+	it := buffer.Iterator()
+
+	if !it.MoveTo(3) {
+		t.Error("MoveTo(3) should return true")
+	}
+	if it.Value() != 3 {
+		t.Errorf("MoveTo(3) should move to element 3, got %d", it.Value())
+	}
+
+	if it.MoveTo(0) {
+		t.Error("MoveTo(0) should return false")
+	}
+
+	if it.MoveTo(6) {
+		t.Error("MoveTo(6) should return false")
+	}
+}
+
+// 测试空Buffer的情况
+func TestEmptyBuffer(t *testing.T) {
+	buffer := New[int](5)
+	it := buffer.Iterator()
+
+	if it.Next() {
+		t.Error("Next() should return false for empty buffer")
+	}
+
+	if it.Prev() {
+		t.Error("Prev() should return false for empty buffer")
+	}
+
+	if it.Index() != 0 {
+		t.Errorf("Index() should return 0 for empty buffer, got %d", it.Index())
+	}
+}
+
+// 测试在迭代过程中修改Buffer
+func TestModifyingBufferDuringIteration(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+	index := it.Index()
+	it.Next()
+
+	buffer.PopBack()
+	if it.MoveTo(index) {
+		t.Error("MoveTo() should return false after modifying buffer")
+	}
+}
+
+// 测试Prev()方法的边界情况
+func TestPrevEdgeCases(t *testing.T) {
+	buffer := createBuffer(1, 2, 3)
+	it := buffer.Iterator()
+
+	// 模拟MoveTo失败的情况
+	it.index = buffer.cap + 1 // 设置一个超出范围的index
+
+	if it.Prev() {
+		t.Error("Prev() should return false when index is out of range")
+	}
+
+	if it.index != -1 {
+		t.Errorf("Prev() should set index to -1 when index was out of range, got %d", it.index)
+	}
+	buffer2 := New[int](1)
+	it2 := buffer2.Iterator()
+	it2.End()
+	if it2.Prev() {
+		t.Error("Prev() should return false for empty buffer")
+	}
+	if it2.index != -2 {
+		t.Errorf("Prev() should set index to -2 for empty buffer, got %d", it2.index)
+	}
+}
+
+// 测试MoveTo()方法的边界情况
+func TestMoveToEdgeCases(t *testing.T) {
+	// 创建一个Buffer,使其内部数组环绕
+	buffer := New[int](5)
+	for i := 1; i <= 7; i++ {
+		buffer.PushBack(i)
+	}
+	// 此时buffer内容应为: [6 7 3 4 5], first = 2, last = 1
+
+	it := buffer.Iterator()
+
+	// 测试移动到第4个元素 (应该是值5)
+	if !it.MoveTo(4) {
+		t.Error("MoveTo(4) should return true")
+	}
+	if it.Value() != 6 {
+		t.Errorf("MoveTo(4) should move to element 6, got %d", it.Value())
+	}
+
+	// 测试移动到第5个元素 (应该是值6)
+	if !it.MoveTo(5) {
+		t.Error("MoveTo(5) should return true")
+	}
+	if it.Value() != 7 {
+		t.Errorf("MoveTo(5) should move to element 7, got %d", it.Value())
+	}
+
+	// 验证内部索引计算
+	expectedIndex := 2
+	if it.index != expectedIndex {
+		t.Errorf("Internal index should be %d, got %d", expectedIndex, it.index)
+	}
+}
+
+func TestIteratorNextEdgeCases(t *testing.T) {
+	// 创建一个容量为 5 的 Buffer
+	cb := New[int](5)
+
+	// 添加一些元素
+	cb.PushBack(1)
+	cb.PushBack(2)
+	cb.PushBack(3)
+
+	it := cb.Iterator()
+
+	// 测试 Next() 当 Index() > que.len 的情况
+	it.index = cb.cap // 设置一个无效的索引
+	if it.Next() {
+		t.Errorf("Next() should return false when index > que.len")
+	}
+	if it.index != -2 {
+		t.Errorf("index should be set to -2 when Next() fails due to invalid index")
+	}
+
+}
+func TestCbIteratorPrev(t *testing.T) {
+	// 创建一个容量为5的缓冲区
+	cb := New[int](5)
+
+	// 测试空缓冲区
+	it := cb.Iterator()
+	if it.Prev() {
+		t.Error("Expected Prev() to return false on empty buffer")
+	}
+
+	// 填充缓冲区
+	for i := 1; i <= 5; i++ {
+		cb.PushBack(i)
+	}
+
+	// 测试从末尾开始的Prev
+	it = cb.Iterator()
+	it.End()
+	if !it.Prev() {
+		t.Error("Expected Prev() to return true at the end of non-empty buffer")
+	}
+	if it.Value() != 5 {
+		t.Errorf("Expected last value to be 5, got %d", it.Value())
+	}
+
+	// 测试连续调用Prev
+	for i := 4; i >= 1; i-- {
+		if !it.Prev() {
+			t.Errorf("Expected Prev() to return true for element %d", i)
+		}
+		if it.Value() != i {
+			t.Errorf("Expected value %d, got %d", i, it.Value())
+		}
+	}
+
+	// 测试到达开头
+	if it.Prev() {
+		t.Error("Expected Prev() to return false at the beginning of buffer")
+	}
+
+	// 测试在开头调用Prev
+	it.Begin()
+	if it.Prev() {
+		t.Error("Expected Prev() to return false when called at the beginning")
+	}
+
+	// 测试循环缓冲区的情况
+	cb.PopFront()  // 移除一个元素
+	cb.PushBack(6) // 添加一个新元素，使缓冲区形成循环
+
+	it = cb.Iterator()
+	it.End()
+	for i := 6; i >= 2; i-- {
+		if !it.Prev() {
+			t.Errorf("Expected Prev() to return true for element %d in circular buffer", i)
+		}
+		if it.Value() != i {
+			t.Errorf("Expected value %d, got %d in circular buffer", i, it.Value())
+		}
+	}
+
+	// 测试MoveTo后的Prev
+	it.MoveTo(3)
+	if !it.Prev() {
+		t.Error("Expected Prev() to return true after MoveTo(3)")
+	}
+	if it.Value() != 3 {
+		t.Errorf("Expected value 3 after MoveTo(3) and Prev(), got %d", it.Value())
+	}
+
+}

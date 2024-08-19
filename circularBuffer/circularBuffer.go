@@ -233,17 +233,6 @@ func (Q *Buffer[T]) Resize(newCap int) {
 	*Q = newAq
 }
 
-type minType interface {
-	~int | ~int32 | ~int64
-}
-
-func min[T minType](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // Iterator returns an iterator of the circularBuffer.
 // The iterator is at the begin position by default.
 // Do not call Push(), Pop(), Resize() on the circularBuffer while iterating,
