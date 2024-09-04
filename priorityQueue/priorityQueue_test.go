@@ -148,3 +148,136 @@ func TestPriorityQueue(t *testing.T) {
 		assert.True(t, pq.IsEmpty())
 	})
 }
+
+func TestTopKPanicOnInvalidK(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	less := func(a, b int) bool { return a < b }
+	pq := NewOf(less, 5, 2, 7, 1, 3)
+	pq.NewTopK(2) // This should panic
+}
+
+func TestNewTopK(t *testing.T) {
+	pq := NewOf(func(a, b int) bool { return a < b }, 1, 2, 3, 4, 5)
+	topK := pq.NewTopK(5)
+
+	if topK.Len() != 5 {
+		t.Errorf("Expected length 5, got %d", topK.Len())
+	}
+
+	if topK.k != 5 {
+		t.Errorf("Expected k to be 5, got %d", topK.k)
+	}
+}
+
+func TestNewTopKPanic(t *testing.T) {
+	pq := NewOf(func(a, b int) bool { return a < b }, 1, 2, 3, 4, 5)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	pq.NewTopK(4) // This should panic
+}
+
+func TestNewTopKOn(t *testing.T) {
+	slice := []int{5, 2, 8, 1, 9, 3, 7}
+	less := func(a, b int) bool { return a < b } // Min heap
+	topK := NewTopKOn(slice, 5, less)
+
+	if topK.Len() != 5 {
+		t.Errorf("Expected length 5, got %d", topK.Len())
+	}
+
+	if topK.Top() != 1 {
+		t.Errorf("Expected top element to be 1, got %d", topK.Top())
+	}
+}
+
+func TestPushTopK(t *testing.T) {
+	less := func(a, b int) bool { return a < b } // Min heap
+	topK := NewTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
+
+	// Push an element smaller than the current top (should not be added)
+	topK.Push(0)
+	if topK.Len() != 5 || topK.Top() != 1 {
+		t.Errorf("Unexpected state after pushing 0")
+	}
+
+	// Push an element larger than the current top (should be added)
+	topK.Push(10)
+	if topK.Len() != 5 || topK.Top() != 2 {
+		t.Errorf("Unexpected state after pushing 10")
+	}
+}
+
+func TestPushTopKMaxHeap(t *testing.T) {
+	less := func(a, b int) bool { return a > b } // Max heap
+	topK := NewTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
+
+	// Push an element larger than the current top (should not be added)
+	topK.Push(10)
+	if topK.Len() != 5 || topK.Top() != 9 {
+		t.Errorf("Unexpected state after pushing 10")
+	}
+
+	// Push an element smaller than the current top (should be added)
+	topK.Push(3)
+	if topK.Len() != 5 || topK.Top() != 8 {
+		t.Errorf("Unexpected state after pushing 3")
+	}
+}
+
+func TestTopKMaintainsOrder(t *testing.T) {
+	less := func(a, b int) bool { return a < b } // Min heap
+	topK := NewTopKOn([]int{}, 3, less)
+
+	elements := []int{4, 1, 7, 3, 8, 2, 6, 5}
+	for _, e := range elements {
+		topK.Push(e)
+	}
+
+	expected := []int{6, 7, 8}
+	for i := 0; i < 3; i++ {
+		if topK.Pop() != expected[i] {
+			t.Errorf("Unexpected order of elements")
+		}
+	}
+}
+
+func TestTopKWithCustomType(t *testing.T) {
+	type Person struct {
+		Name string
+		Age  int
+	}
+
+	less := func(a, b Person) bool { return a.Age < b.Age }
+	topK := NewTopKOn([]Person{}, 3, less)
+
+	people := []Person{
+		{"Alice", 30},
+		{"Bob", 25},
+		{"Charlie", 35},
+		{"David", 20},
+		{"Eve", 40},
+	}
+
+	for _, p := range people {
+		topK.Push(p)
+	}
+
+	if topK.Len() != 3 {
+		t.Errorf("Expected length 3, got %d", topK.Len())
+	}
+
+	oldest := topK.Pop()
+	if oldest.Age != 30 || oldest.Name != "Alice" {
+		t.Errorf("Expected oldest person to be Alice, got %s", oldest.Name)
+	}
+}

@@ -11,6 +11,37 @@ type PriorityQueue[T any] struct {
 	less queue.LessFn[T]
 }
 
+// PriorityQueueTopK is a priority queue that maintains the top k elements.
+type PriorityQueueTopK[T any] struct {
+	*PriorityQueue[T]
+	k int
+}
+
+// NewTopK creates a new PriorityQueueTopK from an existing PriorityQueue.
+// It requires that k is greater than or equal to the current number of elements.
+func (pq *PriorityQueue[T]) NewTopK(k int) *PriorityQueueTopK[T] {
+	if k < len(pq.heap) {
+		panic("PriorityQueueTopK: k must be greater than or equal to the current number of elements")
+	}
+	return &PriorityQueueTopK[T]{PriorityQueue: pq, k: k}
+}
+
+// NewTopKOn creates a new PriorityQueueTopK from a slice.
+// If the length of the slice is greater than k, only the first k elements are used.
+func NewTopKOn[T any](slice []T, k int, less queue.LessFn[T]) *PriorityQueueTopK[T] {
+	if k < len(slice) {
+		slice = slice[0:k]
+	}
+	return &PriorityQueueTopK[T]{PriorityQueue: NewOn(slice, less), k: k}
+}
+
+// Push adds an element to the priority queue, maintaining only the top k elements.
+// If the queue already contains k elements, the new element is added only if it is
+// greater (in a min-heap) or lesser (in a max-heap) than the current top element.
+func (pq *PriorityQueueTopK[T]) Push(v T) {
+	heap.PushHeapTopK(&pq.heap, v, pq.less, pq.k)
+}
+
 // New creates an empty priority object.
 func New[T any](less queue.LessFn[T]) *PriorityQueue[T] {
 	pq := &PriorityQueue[T]{}
