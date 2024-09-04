@@ -25,7 +25,7 @@ func MakeHeap[T any](array []T, less queue.LessFn[T]) {
 func IsHeap[T any](array []T, less queue.LessFn[T]) bool {
 	parent := 0
 	for child := 1; child < len(array); child++ {
-		if !less(array[parent], array[child]) {
+		if less(array[child], array[parent]) {
 			return false
 		}
 
@@ -55,6 +55,29 @@ func PopHeap[T any](heap *[]T, less queue.LessFn[T]) T {
 	heapDown(h, 0, n, less)
 	*heap = h[0:n]
 	return h[n]
+}
+
+// PushHeapTopK pushes a element v into the heap, keeping the top k elements.
+// If the heap is a min heap, PushHeapTopK will keep the top k elements maximum,
+// otherwise it will keep the top k elements minimum.
+//
+// Note that k should be a positive integer and k is the maximum length of the input heap.
+// If k is less than the current length of the heap, it will panic.
+//
+// Complexity: O(log k).
+func PushHeapTopK[T any](heap *[]T, v T, less queue.LessFn[T], k int) {
+	if len(*heap) < k {
+		PushHeap(heap, v, less)
+		return
+	}
+	h := *heap
+	if len(h) > k {
+		panic("PushHeapTopK: heap length > k")
+	}
+	if !less(v, HeapTop(h)) {
+		h[0] = v
+		heapDown(h, 0, k, less)
+	}
 }
 
 // RemoveHeap removes and returns the element at index i from the heap.
