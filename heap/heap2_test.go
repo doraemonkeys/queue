@@ -343,12 +343,21 @@ func TestPushHeapTopKPanic(t *testing.T) {
 	k := 3
 
 	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
+		if r := recover(); r != nil {
+			t.Errorf("PushHeapTopK() panicked, error: %v", r)
 		}
 	}()
 
 	PushHeapTopK(&heap, 5, queue.LessFn[int](lessInt), k)
+
+	expected := []int{3, 4, 5}
+	result := []int{}
+	for len(heap) != 0 {
+		result = append(result, PopHeap(&heap, lessInt))
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("PushHeapTopK() = %v, want %v", result, expected)
+	}
 }
 
 func TestPushHeapTopKWithCustomType(t *testing.T) {
@@ -401,5 +410,98 @@ func TestPushHeapTopKMaintainsOrder(t *testing.T) {
 	expected := []int{97, 98, 99}
 	if !reflect.DeepEqual(heap, expected) {
 		t.Errorf("Final heap = %v, want %v", heap, expected)
+	}
+}
+
+func TestPushHeapTopK3(t *testing.T) {
+	// Define a less function for integers (min heap)
+	lessInt := func(a, b int) bool { return a < b }
+
+	tests := []struct {
+		name     string
+		heap     []int
+		v        int
+		k        int
+		expected []int
+	}{
+		{
+			name:     "Empty heap, k=1",
+			heap:     []int{},
+			v:        5,
+			k:        1,
+			expected: []int{5},
+		},
+		{
+			name:     "Heap with one element, k=1, new element smaller",
+			heap:     []int{5},
+			v:        3,
+			k:        1,
+			expected: []int{5},
+		},
+		{
+			name:     "Heap with one element, k=1, new element larger",
+			heap:     []int{5},
+			v:        7,
+			k:        1,
+			expected: []int{7},
+		},
+		{
+			name:     "Heap with multiple elements, k=3, new element in middle",
+			heap:     []int{3, 7, 5},
+			v:        4,
+			k:        3,
+			expected: []int{4, 7, 5},
+		},
+		{
+			name:     "Heap with multiple elements, k=3, new element largest",
+			heap:     []int{3, 7, 5},
+			v:        8,
+			k:        3,
+			expected: []int{5, 7, 8},
+		},
+		{
+			name:     "Heap with more elements than k, k=3",
+			heap:     []int{2, 4, 6, 8, 10},
+			v:        5,
+			k:        3,
+			expected: []int{6, 8, 10},
+		},
+		{
+			name:     "Heap with fewer elements than k, k=5",
+			heap:     []int{3, 5},
+			v:        4,
+			k:        5,
+			expected: []int{3, 5, 4},
+		},
+		{
+			name:     "Heap with k elements, k=5, new element not in top k",
+			heap:     []int{1, 3, 5, 7, 9},
+			v:        4,
+			k:        5,
+			expected: []int{3, 4, 5, 7, 9},
+		},
+		{
+			name:     "Heap with k elements, k=3, new element in top k",
+			heap:     []int{1, 3, 5, 7, 9},
+			v:        6,
+			k:        3,
+			expected: []int{6, 7, 9},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			heap := tt.heap
+			PushHeapTopK(&heap, tt.v, queue.LessFn[int](lessInt), tt.k)
+
+			if !reflect.DeepEqual(heap, tt.expected) {
+				t.Errorf("PushHeapTopK() = %v, want %v", heap, tt.expected)
+			}
+
+			// Additional check to ensure the result is a valid heap
+			if !IsHeap(heap, queue.LessFn[int](lessInt)) {
+				t.Errorf("Result is not a valid heap: %v", heap)
+			}
+		})
 	}
 }

@@ -132,3 +132,44 @@ func TestLevelOrderString(t *testing.T) {
 		t.Errorf("LevelOrder() = %v, want %v", result, expected)
 	}
 }
+
+func TestPushHeapTopKWithZeroOrNegativeK(t *testing.T) {
+	less := func(a, b int) bool {
+		return a < b
+	}
+
+	tests := []struct {
+		name    string
+		initial []int
+		value   int
+		k       int
+	}{
+		{
+			name:    "k is zero",
+			initial: []int{3, 2, 1},
+			value:   4,
+			k:       0,
+		},
+		{
+			name:    "k is negative",
+			initial: []int{3, 2, 1},
+			value:   4,
+			k:       -1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("expected panic for k = %d, but did not panic", tt.k)
+				}
+			}()
+
+			heapArray := make([]int, len(tt.initial))
+			copy(heapArray, tt.initial)
+
+			heap.PushHeapTopK(&heapArray, tt.value, less, tt.k)
+		})
+	}
+}

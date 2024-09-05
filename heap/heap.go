@@ -57,12 +57,13 @@ func PopHeap[T any](heap *[]T, less queue.LessFn[T]) T {
 	return h[n]
 }
 
-// PushHeapTopK pushes a element v into the heap, keeping the top k elements.
-// If the heap is a min heap, PushHeapTopK will keep the top k elements maximum,
-// otherwise it will keep the top k elements minimum.
+// PushHeapTopK pushes an element v into the heap, keeping the top k elements.
+// If the heap is a min heap, PushHeapTopK will keep the k largest elements,
+// otherwise it will keep the k smallest elements.
 //
-// Note that k should be a positive integer and k is the maximum length of the input heap.
-// If k is less than the current length of the heap, it will panic.
+// Note that k should be a positive integer. If k is less than the length of the heap,
+// the heap will be truncated to the first k elements. For a min heap, this means
+// keeping the k largest elements, as the smallest elements are at the top.
 //
 // Complexity: O(log k).
 func PushHeapTopK[T any](heap *[]T, v T, less queue.LessFn[T], k int) {
@@ -70,10 +71,10 @@ func PushHeapTopK[T any](heap *[]T, v T, less queue.LessFn[T], k int) {
 		PushHeap(heap, v, less)
 		return
 	}
-	h := *heap
-	if len(h) > k {
-		panic("PushHeapTopK: heap length > k")
+	for len(*heap) > k {
+		PopHeap(heap, less)
 	}
+	h := *heap
 	if !less(v, HeapTop(h)) {
 		h[0] = v
 		heapDown(h, 0, k, less)

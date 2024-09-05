@@ -9,11 +9,14 @@ func Example() {
 	pq.Push(1)
 	pq.Push(5)
 	pq.Push(3)
-	for !pq.IsEmpty() {
-		fmt.Println(pq.Pop())
+
+	pq2 := pq.ToTopK(pq.Len())
+	pq2.Push(7)
+	for !pq2.IsEmpty() {
+		fmt.Println(pq2.Pop())
 	}
 	// Output:
-	// 1
 	// 3
 	// 5
+	// 7
 }

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/doraemonkeys/queue"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -155,15 +156,24 @@ func TestTopKPanicOnInvalidK(t *testing.T) {
 			t.Errorf("The code did not panic")
 		}
 	}()
-
 	less := func(a, b int) bool { return a < b }
 	pq := NewOf(less, 5, 2, 7, 1, 3)
-	pq.NewTopK(2) // This should panic
+	pq.ToTopK(0) // This should panic
+}
+func TestTopKPanicOnInvalidK2(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+	less := func(a, b int) bool { return a < b }
+	pq := NewOf(less, 5, 2, 7, 1, 3)
+	pq.ToTopK(-1) // This should panic
 }
 
 func TestNewTopK(t *testing.T) {
 	pq := NewOf(func(a, b int) bool { return a < b }, 1, 2, 3, 4, 5)
-	topK := pq.NewTopK(5)
+	topK := pq.ToTopK(5)
 
 	if topK.Len() != 5 {
 		t.Errorf("Expected length 5, got %d", topK.Len())
@@ -174,35 +184,27 @@ func TestNewTopK(t *testing.T) {
 	}
 }
 
-func TestNewTopKPanic(t *testing.T) {
-	pq := NewOf(func(a, b int) bool { return a < b }, 1, 2, 3, 4, 5)
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
-	pq.NewTopK(4) // This should panic
+func newTopKOn[T any](slice []T, k int, less queue.LessFn[T]) *PQueueTopK[T] {
+	return NewOn(slice, less).ToTopK(k)
 }
 
 func TestNewTopKOn(t *testing.T) {
 	slice := []int{5, 2, 8, 1, 9, 3, 7}
 	less := func(a, b int) bool { return a < b } // Min heap
-	topK := NewTopKOn(slice, 5, less)
+	topK := newTopKOn(slice, 5, less)
 
 	if topK.Len() != 5 {
 		t.Errorf("Expected length 5, got %d", topK.Len())
 	}
 
-	if topK.Top() != 1 {
-		t.Errorf("Expected top element to be 1, got %d", topK.Top())
+	if topK.Top() != 3 {
+		t.Errorf("Expected top element to be 3, got %d", topK.Top())
 	}
 }
 
 func TestPushTopK(t *testing.T) {
 	less := func(a, b int) bool { return a < b } // Min heap
-	topK := NewTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
+	topK := newTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
 
 	// Push an element smaller than the current top (should not be added)
 	topK.Push(0)
@@ -219,7 +221,7 @@ func TestPushTopK(t *testing.T) {
 
 func TestPushTopKMaxHeap(t *testing.T) {
 	less := func(a, b int) bool { return a > b } // Max heap
-	topK := NewTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
+	topK := newTopKOn([]int{5, 2, 8, 1, 9}, 5, less)
 
 	// Push an element larger than the current top (should not be added)
 	topK.Push(10)
@@ -236,7 +238,7 @@ func TestPushTopKMaxHeap(t *testing.T) {
 
 func TestTopKMaintainsOrder(t *testing.T) {
 	less := func(a, b int) bool { return a < b } // Min heap
-	topK := NewTopKOn([]int{}, 3, less)
+	topK := newTopKOn([]int{}, 3, less)
 
 	elements := []int{4, 1, 7, 3, 8, 2, 6, 5}
 	for _, e := range elements {
@@ -258,7 +260,7 @@ func TestTopKWithCustomType(t *testing.T) {
 	}
 
 	less := func(a, b Person) bool { return a.Age < b.Age }
-	topK := NewTopKOn([]Person{}, 3, less)
+	topK := newTopKOn([]Person{}, 3, less)
 
 	people := []Person{
 		{"Alice", 30},
@@ -280,4 +282,75 @@ func TestTopKWithCustomType(t *testing.T) {
 	if oldest.Age != 30 || oldest.Name != "Alice" {
 		t.Errorf("Expected oldest person to be Alice, got %s", oldest.Name)
 	}
+}
+
+func intLess(a, b int) bool {
+	return a < b
+}
+
+func TestToTopK_MinHeap(t *testing.T) {
+	pq := NewOf(intLess, 3, 1, 4, 1, 5, 9, 2, 6, 5)
+	topK := pq.ToTopK(3)
+
+	if topK.Len() != 3 {
+		t.Errorf("expected length 3, got %d", topK.Len())
+	}
+
+	expectedTop := 5 // For a min-heap maintaining top 3 largest elements
+	if topK.Top() != expectedTop {
+		t.Errorf("expected top element %d, got %d", expectedTop, topK.Top())
+	}
+}
+
+func TestToTopK_MaxHeap(t *testing.T) {
+	// Define a max-heap by reversing the comparison
+	maxHeapLess := func(a, b int) bool {
+		return a > b
+	}
+	pq := NewOf(maxHeapLess, 3, 1, 4, 1, 5, 9, 2, 6, 5)
+	topK := pq.ToTopK(3)
+
+	if topK.Len() != 3 {
+		t.Errorf("expected length 3, got %d", topK.Len())
+	}
+
+	expectedTop := 2 // For a max-heap maintaining top 3 smallest elements
+	if topK.Top() != expectedTop {
+		t.Errorf("expected top element %d, got %d", expectedTop, topK.Top())
+	}
+}
+
+func TestToTopK_EmptyQueue(t *testing.T) {
+	pq := New[int](intLess)
+	topK := pq.ToTopK(3)
+
+	if topK.Len() != 0 {
+		t.Errorf("expected length 0, got %d", topK.Len())
+	}
+}
+
+func TestToTopK_Push(t *testing.T) {
+	pq := NewOf(intLess, 10, 20, 30)
+	topK := pq.ToTopK(2)
+
+	topK.Push(25)
+	if topK.Len() != 2 {
+		t.Errorf("expected length 2, got %d", topK.Len())
+	}
+
+	expectedTop := 25
+	if topK.Top() != expectedTop {
+		t.Errorf("expected top element %d, got %d", expectedTop, topK.Top())
+	}
+}
+
+func TestToTopK_InvalidK(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic for k <= 0, but did not panic")
+		}
+	}()
+
+	pq := NewOf(intLess, 1, 2, 3)
+	pq.ToTopK(0)
 }
