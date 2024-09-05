@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/doraemonkeys/queue"
+	"github.com/doraemonkeys/queue/heap"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -490,4 +491,123 @@ func testPQueueTopKPushEdgeCases(t *testing.T) {
 			t.Errorf("Expected length to be 1, got %d", pq.Len())
 		}
 	})
+}
+
+func TestShrinkInto(t *testing.T) {
+
+	var modifySlice = func(s ...int) {
+		s[0] = 99
+	}
+
+	var a = []int{1, 2, 3}
+	modifySlice(a...)
+	if a[0] != 99 {
+		t.Errorf("Expected a[0] to be 99, got %d", a[0])
+	}
+
+	less := func(a, b int) bool {
+		return a < b
+	}
+
+	tests := []struct {
+		name        string
+		queueValues []int
+		baseLen     int
+		baseCap     int
+		expectPanic bool
+	}{
+		{
+			name:        "Empty queue into empty base",
+			queueValues: []int{},
+			baseLen:     0,
+			baseCap:     5,
+			expectPanic: false,
+		},
+		{
+			name:        "Queue smaller than base capacity",
+			queueValues: []int{3, 1, 4},
+			baseLen:     0,
+			baseCap:     5,
+			expectPanic: false,
+		},
+		{
+			name:        "Queue equal to base capacity",
+			queueValues: []int{5, 2, 7, 1, 8},
+			baseLen:     0,
+			baseCap:     5,
+			expectPanic: false,
+		},
+		{
+			name:        "Queue equal to base capacity2",
+			queueValues: []int{5, 2, 7, 1, 8},
+			baseLen:     3,
+			baseCap:     5,
+			expectPanic: false,
+		},
+		{
+			name:        "Queue larger than base capacity",
+			queueValues: []int{9, 3, 6, 2, 8, 1},
+			baseLen:     0,
+			baseCap:     5,
+			expectPanic: true,
+		},
+		{
+			name:        "Base with existing elements",
+			queueValues: []int{4, 2, 6},
+			baseLen:     2,
+			baseCap:     5,
+			expectPanic: false,
+		},
+	}
+	var cloneSlice = func(s []int) []int {
+		ss := make([]int, len(s))
+		copy(ss, s)
+		return ss
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pq := NewOf(less, cloneSlice(tt.queueValues)...)
+			base := make([]int, tt.baseLen, tt.baseCap)
+
+			if tt.expectPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected ShrinkInto to panic, but it didn't")
+					}
+				}()
+			}
+
+			pq.ShrinkInto(base)
+
+			if tt.expectPanic {
+				return
+			}
+
+			if len(pq.heap) != len(tt.queueValues) {
+				t.Errorf("Expected queue length %d, got %d", len(tt.queueValues), len(pq.heap))
+			}
+
+			if cap(pq.heap) != tt.baseCap {
+				t.Errorf("Expected queue capacity %d, got %d", tt.baseCap, cap(pq.heap))
+			}
+
+			tempq := NewOf(less, cloneSlice(tt.queueValues)...)
+			var expected []int
+			for !tempq.IsEmpty() {
+				expected = append(expected, tempq.Pop())
+			}
+			var result []int
+			for !pq.IsEmpty() {
+				result = append(result, pq.Pop())
+			}
+			if !reflect.DeepEqual(expected, result) {
+				t.Errorf("Expected %v, got %v", expected, result)
+			}
+
+			if !heap.IsHeap(pq.heap, pq.less) {
+				t.Errorf("Heap property violated after ShrinkInto")
+			}
+		})
+	}
 }

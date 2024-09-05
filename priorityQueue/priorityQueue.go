@@ -83,6 +83,22 @@ func (pq *PQueue[T]) Clear() {
 	pq.heap = pq.heap[0:0]
 }
 
+// ShrinkInto transfers the priority queue's contents into the provided base slice,
+// potentially reducing memory usage.
+//
+// The base slice must have enough capacity to hold all elements of the priority queue.
+// If not, it will panic.
+func (pq *PQueue[T]) ShrinkInto(base []T) {
+	if pq.Len() > cap(base) {
+		panic("base slice capacity is less than the priority queue")
+	}
+	n := copy(base, pq.heap)
+	if n < pq.Len() {
+		base = append(base, pq.heap[n:]...)
+	}
+	pq.heap = base
+}
+
 // Top returns the top element in the priority queue.
 func (pq *PQueue[T]) Top() T {
 	return pq.heap[0]
