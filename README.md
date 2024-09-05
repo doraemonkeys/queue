@@ -10,13 +10,52 @@
 - Higher performance
 - arrayQueue is scalable, automatic expanding like slice
 
-## QuickStart - arrayQueue
+
+
+## Quick Start
+
+### priorityQueue
+
+```bash
+go get -u github.com/doraemonkeys/queue/priorityQueue
+```
+
+
+```go
+package main
+
+import (
+	"fmt"
+
+	pq "github.com/doraemonkeys/queue/priorityQueue"
+)
+
+func main() {
+	q := pq.New(func(a, b int) bool {
+		return a < b
+	})
+	q.Push(1)
+	q.Push(5)
+	q.Push(3)
+
+	q2 := q.ToTopK(q.Len())
+	q2.Push(7)
+	for !q2.IsEmpty() {
+		fmt.Println(q2.Pop())
+	}
+	// Output:
+	// 3
+	// 5
+	// 7
+}
+```
+
+
+### arrayQueue
 
 ```bash
 go get -u github.com/doraemonkeys/queue/arrayQueue
 ```
-
-
 
 ```go
 package main
@@ -51,7 +90,11 @@ func main() {
 
 
 
-## QuickStart - circularBuffer
+### circularBuffer
+
+```bash
+go get -u github.com/doraemonkeys/queue/circularBuffer
+```
 
 ```go
 package main
@@ -82,38 +125,6 @@ func main() {
 	// 3
 }
 ```
-
-
-
-## QuickStart - priorityQueue
-
-```go
-package main
-
-import (
-	"fmt"
-
-	pq "github.com/doraemonkeys/queue/priorityQueue"
-)
-
-func main() {
-	q := pq.New(func(a, b int) bool {
-		return a < b
-	})
-	q.Push(1)
-	q.Push(5)
-	q.Push(3)
-	for !q.IsEmpty() {
-		fmt.Println(q.Pop())
-	}
-	// Output:
-	// 1
-	// 3
-	// 5
-}
-```
-
-
 
 
 
