@@ -66,19 +66,21 @@ func PopHeap[T any](heap *[]T, less queue.LessFn[T]) T {
 // keeping the k largest elements, as the smallest elements are at the top.
 //
 // Complexity: O(log k).
-func PushHeapTopK[T any](heap *[]T, v T, less queue.LessFn[T], k int) {
+func PushHeapTopK[T any](heap *[]T, v T, less queue.LessFn[T], k int) bool {
 	if len(*heap) < k {
 		PushHeap(heap, v, less)
-		return
+		return true
 	}
 	for len(*heap) > k {
 		PopHeap(heap, less)
 	}
 	h := *heap
-	if !less(v, HeapTop(h)) {
+	if less(HeapTop(h), v) {
 		h[0] = v
 		heapDown(h, 0, k, less)
+		return true
 	}
+	return false
 }
 
 // RemoveHeap removes and returns the element at index i from the heap.

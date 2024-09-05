@@ -505,3 +505,84 @@ func TestPushHeapTopK3(t *testing.T) {
 		})
 	}
 }
+
+func TestPushHeapTopK4(t *testing.T) {
+	t.Run("Empty heap", func(t *testing.T) {
+		var h []int
+		less := func(a, b int) bool { return a < b }
+		added := PushHeapTopK(&h, 5, less, 3)
+		if !added || len(h) != 1 || h[0] != 5 {
+			t.Errorf("Expected [5], got %v", h)
+		}
+	})
+
+	t.Run("Not full heap", func(t *testing.T) {
+		h := []int{3, 7}
+		less := func(a, b int) bool { return a < b }
+		added := PushHeapTopK(&h, 5, less, 3)
+		if !added || len(h) != 3 || !IsHeap(h, less) {
+			t.Errorf("Expected heap of length 3, got %v", h)
+		}
+	})
+
+	t.Run("Full heap, add larger", func(t *testing.T) {
+		h := []int{3, 7, 5}
+		less := func(a, b int) bool { return a < b }
+		added := PushHeapTopK(&h, 8, less, 3)
+		if !added || len(h) != 3 || h[0] != 5 || !IsHeap(h, less) {
+			t.Errorf("Expected [5,7,8], got %v", h)
+		}
+	})
+
+	t.Run("Full heap, add smaller", func(t *testing.T) {
+		h := []int{3, 7, 5}
+		less := func(a, b int) bool { return a < b }
+		added := PushHeapTopK(&h, 2, less, 3)
+		if added || len(h) != 3 || h[0] != 3 || !IsHeap(h, less) {
+			t.Errorf("Expected [3,7,5], got %v", h)
+		}
+	})
+
+	t.Run("Custom compare function", func(t *testing.T) {
+		h := []int{7, 3, 5}
+		less := func(a, b int) bool { return a > b } // max heap
+		MakeHeap(h, less)
+		added := PushHeapTopK(&h, 8, less, 3)
+		if added || len(h) != 3 || h[0] != 7 || !IsHeap(h, less) {
+			t.Errorf("Expected [8,7,5], got %v", h)
+		}
+	})
+
+	t.Run("k = 1", func(t *testing.T) {
+		h := []int{5}
+		less := func(a, b int) bool { return a < b }
+		added := PushHeapTopK(&h, 3, less, 1)
+		if added || len(h) != 1 || h[0] != 5 {
+			t.Errorf("Expected [5], got %v", h)
+		}
+		added = PushHeapTopK(&h, 7, less, 1)
+		if !added || len(h) != 1 || h[0] != 7 {
+			t.Errorf("Expected [7], got %v", h)
+		}
+	})
+
+	t.Run("k = len(heap)", func(t *testing.T) {
+		h := []int{3, 7, 5}
+		less := func(a, b int) bool { return a < b }
+		MakeHeap(h, less)
+		added := PushHeapTopK(&h, 4, less, 3)
+		if !added || len(h) != 3 || !IsHeap(h, less) {
+			t.Errorf("Expected heap of length 3, got %v", h)
+		}
+	})
+
+	t.Run("Full heap, add equal to min", func(t *testing.T) {
+		h := []int{1, 3, 5}
+		less := func(a, b int) bool { return a < b }
+		MakeHeap(h, less)
+		added := PushHeapTopK(&h, 1, less, 3)
+		if added || len(h) != 3 || h[0] != 1 || !IsHeap(h, less) {
+			t.Errorf("Expected false and [1,3,5], got %v and %v", added, h)
+		}
+	})
+}

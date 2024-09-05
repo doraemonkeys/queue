@@ -33,11 +33,12 @@ func (pq *PQueue[T]) ToTopK(k int) *PQueueTopK[T] {
 }
 
 // Push adds an element to the priority queue while maintaining only the top k elements.
+// It returns true if the element is added, otherwise false.
 //
 // If the heap is a min heap, Push will keep the k largest elements,
 // otherwise it will keep the k smallest elements.
-func (pq *PQueueTopK[T]) Push(v T) {
-	heap.PushHeapTopK(&pq.heap, v, pq.less, pq.k)
+func (pq *PQueueTopK[T]) Push(v T) bool {
+	return heap.PushHeapTopK(&pq.heap, v, pq.less, pq.k)
 }
 
 // New creates an empty priority object.

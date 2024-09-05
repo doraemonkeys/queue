@@ -354,3 +354,140 @@ func TestToTopK_InvalidK(t *testing.T) {
 	pq := NewOf(intLess, 1, 2, 3)
 	pq.ToTopK(0)
 }
+
+func TestPQueueTopKPush(t *testing.T) {
+	t.Run("MinHeap", func(t *testing.T) {
+		testPQueueTopKPushMinHeap(t)
+	})
+
+	t.Run("MaxHeap", func(t *testing.T) {
+		testPQueueTopKPushMaxHeap(t)
+	})
+
+	t.Run("EdgeCases", func(t *testing.T) {
+		testPQueueTopKPushEdgeCases(t)
+	})
+}
+
+func testPQueueTopKPushMinHeap(t *testing.T) {
+	less := func(a, b int) bool { return a < b }
+	pq := New(less).ToTopK(3)
+
+	// Test pushing elements when queue is not full
+	if !pq.Push(5) {
+		t.Error("Push should return true when queue is not full")
+	}
+	if !pq.Push(3) {
+		t.Error("Push should return true when queue is not full")
+	}
+	if !pq.Push(7) {
+		t.Error("Push should return true when queue is not full")
+	}
+
+	// Test pushing larger element (should be added)
+	if !pq.Push(9) {
+		t.Error("Push should return true for larger element")
+	}
+	if pq.Top() != 5 {
+		t.Errorf("Expected top element to be 5, got %d", pq.Top())
+	}
+
+	// Test pushing smaller element (should not be added)
+	if pq.Push(1) {
+		t.Error("Push should return false for smaller element")
+	}
+	if pq.Top() != 5 {
+		t.Errorf("Expected top element to remain 5, got %d", pq.Top())
+	}
+
+	// Verify final state
+	expected := []int{5, 7, 9}
+	result := []int{}
+	for !pq.IsEmpty() {
+		result = append(result, pq.Pop())
+	}
+	if !reflect.DeepEqual(expected, result) {
+		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+func testPQueueTopKPushMaxHeap(t *testing.T) {
+	less := func(a, b int) bool { return a > b }
+	pq := New(less).ToTopK(3)
+
+	// Test pushing elements when queue is not full
+	if !pq.Push(5) {
+		t.Error("Push should return true when queue is not full")
+	}
+	if !pq.Push(3) {
+		t.Error("Push should return true when queue is not full")
+	}
+	if !pq.Push(7) {
+		t.Error("Push should return true when queue is not full")
+	}
+
+	if !pq.Push(1) {
+		t.Error("Push should return true for smaller element")
+	}
+	if pq.Top() != 5 {
+		t.Errorf("Expected top element to be 5, got %d", pq.Top())
+	}
+
+	// Test pushing larger element (should not be added)
+	if pq.Push(9) {
+		t.Error("Push should return false for larger element")
+	}
+	if pq.Top() != 5 {
+		t.Errorf("Expected top element to remain 5, got %d", pq.Top())
+	}
+
+	// Verify final state
+	expected := []int{5, 3, 1}
+	result := []int{}
+	for !pq.IsEmpty() {
+		result = append(result, pq.Pop())
+	}
+	if !reflect.DeepEqual(expected, result) {
+		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+func testPQueueTopKPushEdgeCases(t *testing.T) {
+	less := func(a, b int) bool { return a < b }
+
+	t.Run("k=1", func(t *testing.T) {
+		pq := New(less).ToTopK(1)
+		if !pq.Push(5) {
+			t.Error("Push should return true for first element")
+		}
+		if pq.Push(3) {
+			t.Error("Push should return false for smaller element")
+		}
+		if pq.Top() != 5 {
+			t.Errorf("Expected top element to be 5, got %d", pq.Top())
+		}
+	})
+
+	t.Run("Equal elements", func(t *testing.T) {
+		pq := New(less).ToTopK(3)
+		pq.Push(5)
+		pq.Push(5)
+		pq.Push(5)
+		if pq.Push(5) {
+			t.Error("Push should return false for equal element when queue is full")
+		}
+		if pq.Len() != 3 {
+			t.Errorf("Expected length to be 3, got %d", pq.Len())
+		}
+	})
+
+	t.Run("Empty queue", func(t *testing.T) {
+		pq := New(less).ToTopK(3)
+		if !pq.Push(5) {
+			t.Error("Push should return true for empty queue")
+		}
+		if pq.Len() != 1 {
+			t.Errorf("Expected length to be 1, got %d", pq.Len())
+		}
+	})
+}
