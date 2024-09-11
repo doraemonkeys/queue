@@ -375,33 +375,21 @@ func testPQueueTopKPushMinHeap(t *testing.T) {
 	pq := New(less).ToTopK(3)
 
 	// Test pushing elements when queue is not full
-	ok, _, evicted := pq.Push(5)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ := pq.Push(5)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
-	ok, _, evicted = pq.Push(3)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ = pq.Push(3)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
-	ok, _, evicted = pq.Push(7)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ = pq.Push(7)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
 
 	// Test pushing larger element (should be added)
-	ok, val, evicted := pq.Push(9)
-	if !ok {
-		t.Error("Push should return true for larger element")
-	}
+	evicted, val := pq.Push(9)
 	if !evicted {
 		t.Error("Push should evict element when queue is full")
 	}
@@ -413,10 +401,7 @@ func testPQueueTopKPushMinHeap(t *testing.T) {
 	}
 
 	// Test pushing smaller element (should not be added)
-	ok, _, evicted = pq.Push(1)
-	if ok {
-		t.Error("Push should return false for smaller element")
-	}
+	evicted, _ = pq.Push(1)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
@@ -440,32 +425,20 @@ func testPQueueTopKPushMaxHeap(t *testing.T) {
 	pq := New(less).ToTopK(3)
 
 	// Test pushing elements when queue is not full
-	ok, _, evicted := pq.Push(5)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ := pq.Push(5)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
-	ok, _, evicted = pq.Push(3)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ = pq.Push(3)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
-	ok, _, evicted = pq.Push(7)
-	if !ok {
-		t.Error("Push should return true when queue is not full")
-	}
+	evicted, _ = pq.Push(7)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
 
-	ok, _, evicted = pq.Push(1)
-	if !ok {
-		t.Error("Push should return true for smaller element")
-	}
+	evicted, _ = pq.Push(1)
 	if !evicted {
 		t.Error("Push should evict element when queue is full")
 	}
@@ -474,10 +447,7 @@ func testPQueueTopKPushMaxHeap(t *testing.T) {
 	}
 
 	// Test pushing larger element (should not be added)
-	ok, _, evicted = pq.Push(9)
-	if ok {
-		t.Error("Push should return false for larger element")
-	}
+	evicted, _ = pq.Push(9)
 	if evicted {
 		t.Error("Push should not evict element when queue is not full")
 	}
@@ -501,13 +471,13 @@ func testPQueueTopKPushEdgeCases(t *testing.T) {
 
 	t.Run("k=1", func(t *testing.T) {
 		pq := New(less).ToTopK(1)
-		ok, _, _ := pq.Push(5)
-		if !ok {
-			t.Error("Push should return true for first element")
+		evicted, _ := pq.Push(5)
+		if evicted {
+			t.Error("Push should return false for first element")
 		}
-		ok, _, _ = pq.Push(3)
-		if ok {
-			t.Error("Push should return false for smaller element")
+		evicted, _ = pq.Push(3)
+		if evicted {
+			t.Error("Push should return false for second element")
 		}
 		if pq.Top() != 5 {
 			t.Errorf("Expected top element to be 5, got %d", pq.Top())
@@ -519,8 +489,8 @@ func testPQueueTopKPushEdgeCases(t *testing.T) {
 		pq.Push(5)
 		pq.Push(5)
 		pq.Push(5)
-		ok, _, _ := pq.Push(5)
-		if ok {
+		evicted, _ := pq.Push(5)
+		if evicted {
 			t.Error("Push should return false for equal element when queue is full")
 		}
 		if pq.Len() != 3 {
@@ -530,9 +500,9 @@ func testPQueueTopKPushEdgeCases(t *testing.T) {
 
 	t.Run("Empty queue", func(t *testing.T) {
 		pq := New(less).ToTopK(3)
-		ok, _, _ := pq.Push(5)
-		if !ok {
-			t.Error("Push should return true for empty queue")
+		evicted, _ := pq.Push(5)
+		if evicted {
+			t.Error("Push should return false for first element")
 		}
 		if pq.Len() != 1 {
 			t.Errorf("Expected length to be 1, got %d", pq.Len())
@@ -664,30 +634,25 @@ func TestPQueueTopKPush2(t *testing.T) {
 		pq := New(func(a, b int) bool { return a < b }).ToTopK(3)
 
 		// Test pushing when not full
-		ok, val, evicted := pq.Push(5)
-		assert.True(t, ok)
+		evicted, val := pq.Push(5)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
-		ok, val, evicted = pq.Push(3)
-		assert.True(t, ok)
+		evicted, val = pq.Push(3)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
-		ok, val, evicted = pq.Push(7)
-		assert.True(t, ok)
+		evicted, val = pq.Push(7)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
 		// Test pushing when full, but new element is larger
-		ok, val, evicted = pq.Push(9)
-		assert.True(t, ok)
+		evicted, val = pq.Push(9)
 		assert.Equal(t, 3, val)
 		assert.True(t, evicted)
 
 		// Test pushing when full, but new element is smaller
-		ok, val, evicted = pq.Push(2)
-		assert.False(t, ok)
+		evicted, val = pq.Push(2)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
@@ -703,25 +668,21 @@ func TestPQueueTopKPush2(t *testing.T) {
 		pq := New(func(a, b int) bool { return a > b }).ToTopK(2)
 
 		// Test pushing when not full
-		ok, val, evicted := pq.Push(5)
-		assert.True(t, ok)
+		evicted, val := pq.Push(5)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
-		ok, val, evicted = pq.Push(8)
-		assert.True(t, ok)
+		evicted, val = pq.Push(8)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
 		// Test pushing when full, but new element is smaller
-		ok, val, evicted = pq.Push(3)
-		assert.True(t, ok)
+		evicted, val = pq.Push(3)
 		assert.Equal(t, 8, val)
 		assert.True(t, evicted)
 
 		// Test pushing when full, but new element is larger
-		ok, val, evicted = pq.Push(10)
-		assert.False(t, ok)
+		evicted, val = pq.Push(10)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
@@ -737,20 +698,17 @@ func TestPQueueTopKPush2(t *testing.T) {
 		pq := New(func(a, b int) bool { return a < b }).ToTopK(1)
 
 		// Test pushing to empty queue
-		ok, val, evicted := pq.Push(5)
-		assert.True(t, ok)
+		evicted, val := pq.Push(5)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
 		// Test pushing larger value
-		ok, val, evicted = pq.Push(8)
-		assert.True(t, ok)
+		evicted, val = pq.Push(8)
 		assert.Equal(t, 5, val)
 		assert.True(t, evicted)
 
 		// Test pushing smaller value
-		ok, val, evicted = pq.Push(3)
-		assert.False(t, ok)
+		evicted, val = pq.Push(3)
 		assert.Equal(t, 0, val)
 		assert.False(t, evicted)
 
