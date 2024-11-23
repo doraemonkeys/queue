@@ -22,6 +22,15 @@ func TestMakeHeap(t *testing.T) {
 	}
 }
 
+func TestMakeHeapOrdered(t *testing.T) {
+	data := []int{5, 3, 8, 4, 1, 2}
+	heap.MakeHeapOrdered(data, IntHeap(data).Less)
+
+	if !heap.IsHeap(data, IntHeap(data).Less) {
+		t.Errorf("MakeHeapOrdered failed: %v is not a valid heap", data)
+	}
+}
+
 func TestIsHeap(t *testing.T) {
 	data := []int{1, 3, 2, 4, 5, 8}
 	if !heap.IsHeap(data, IntHeap(data).Less) {

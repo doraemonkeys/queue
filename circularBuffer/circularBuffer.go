@@ -1,5 +1,9 @@
 package circularBuffer
 
+import (
+	"sort"
+)
+
 //推荐通过New()方法获取，若不是，请使用Resize()初始化底层切片
 
 // Recommand to get a new circularBuffer by New() method,
@@ -239,12 +243,13 @@ func (Q *Buffer[T]) Resize(newCap int) {
 // otherwise it may cause unpredictable errors.
 // If you must call these methods, you need to get the iterator again,
 // or move the iterator to the original position by calling MoveTo().
-//  e.g.:
-//  it := cb.Iterator()
-//  index := it.Index()
-//  que.Pop()
-//  success := it.MoveTo(index)
-//  ......
+//
+//	e.g.:
+//	it := cb.Iterator()
+//	index := it.Index()
+//	que.Pop()
+//	success := it.MoveTo(index)
+//	......
 func (Q *Buffer[T]) Iterator() *CbIterator[T] {
 	var it = &CbIterator[T]{
 		que: Q,
@@ -365,6 +370,7 @@ func (c *CbIterator[T]) Prev() bool {
 
 //将迭代器移动到目标索引(len >= index > 0)的位置，若索引不合法，则迭代器状态不变并返回false
 
+// Deprecated: Use MoveTo2() instead.
 // MoveTo moves the iterator to the position of the specified index.
 // The index is counted from 1.
 // It returns false if the index is invalid.
@@ -380,4 +386,38 @@ func (c *CbIterator[T]) MoveTo(index int) bool {
 		c.index = index - countFirstToSliceEnd
 	}
 	return true
+}
+
+// MoveTo2 moves the iterator to the position of the specified index.
+// The index is counted from 0.
+// It returns false if the index is invalid.
+func (c *CbIterator[T]) MoveTo2(index int) bool {
+	if index >= c.que.len || index < 0 {
+		return false
+	}
+	c.Begin()
+	countFirstToSliceEnd := c.que.cap - c.que.first
+	if countFirstToSliceEnd >= index {
+		c.index = c.que.first + index
+	} else {
+		c.index = index - countFirstToSliceEnd
+	}
+	return true
+}
+
+func (Q *Buffer[T]) Get(index int) T {
+	if index >= Q.len || index < 0 {
+		panic("index out of range")
+	}
+	countFirstToSliceEnd := Q.cap - Q.first
+	if countFirstToSliceEnd >= index {
+		return Q.data[Q.first+index]
+	} else {
+		return Q.data[index-countFirstToSliceEnd]
+	}
+}
+
+// BinarySearch only works on ordered queues, more usage please refer to sort.Find().
+func (Q *Buffer[T]) BinarySearch(n int, cmp func(v T) int) (index int, found bool) {
+	return sort.Find(n, func(i int) int { return cmp(Q.Get(i)) })
 }

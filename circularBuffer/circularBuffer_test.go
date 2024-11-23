@@ -788,6 +788,18 @@ func TestIterator(t *testing.T) {
 		}
 	})
 
+	t.Run("MoveTo2", func(t *testing.T) {
+		it := cb.Iterator()
+
+		// 测试有效移动
+		if !it.MoveTo2(1) {
+			t.Error("MoveTo2(2) should return true")
+		}
+		if it.Value() != 2 {
+			t.Errorf("Expected value 2 after MoveTo(2), got %d", it.Value())
+		}
+	})
+
 	t.Run("Wraparound", func(t *testing.T) {
 		// 填满Buffer并造成环绕
 		cb.PushBack(4)
@@ -1137,4 +1149,248 @@ func TestCbIteratorPrev(t *testing.T) {
 		t.Errorf("Expected value 3 after MoveTo(3) and Prev(), got %d", it.Value())
 	}
 
+}
+
+func TestGet_EmptyBuffer(t *testing.T) {
+	buf := New[int](5)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Get on empty buffer should panic")
+		}
+	}()
+
+	buf.Get(0)
+}
+
+func TestGet_SingleElement(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(42)
+
+	if got := buf.Get(0); got != 42 {
+		t.Errorf("Get(0) = %v, want 42", got)
+	}
+}
+
+func TestGet_MultipleElements(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(1)
+	buf.PushBack(2)
+	buf.PushBack(3)
+
+	testCases := []struct {
+		index int
+		want  int
+	}{
+		{0, 1},
+		{1, 2},
+		{2, 3},
+	}
+
+	for _, tc := range testCases {
+		if got := buf.Get(tc.index); got != tc.want {
+			t.Errorf("Get(%d) = %v, want %v", tc.index, got, tc.want)
+		}
+	}
+}
+
+func TestGet_WrappedBuffer(t *testing.T) {
+	buf := New[int](3)
+	buf.PushBack(1)
+	buf.PushBack(2)
+	buf.PushBack(3)
+	buf.PushBack(4) // This should wrap around
+
+	testCases := []struct {
+		index int
+		want  int
+	}{
+		{0, 2},
+		{1, 3},
+		{2, 4},
+	}
+
+	for _, tc := range testCases {
+		if got := buf.Get(tc.index); got != tc.want {
+			t.Errorf("Get(%d) = %v, want %v", tc.index, got, tc.want)
+		}
+	}
+}
+
+func TestGet_IndexOutOfRange(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(1)
+	buf.PushBack(2)
+
+	testCases := []int{-1, 2, 5}
+
+	for _, index := range testCases {
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("Get(%d) should panic", index)
+				}
+			}()
+			buf.Get(index)
+		}()
+	}
+}
+
+func TestGet_AfterClear(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(1)
+	buf.PushBack(2)
+	buf.Clear()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Get on cleared buffer should panic")
+		}
+	}()
+
+	buf.Get(0)
+}
+
+func TestGet_AfterPopFront(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(1)
+	buf.PushBack(2)
+	buf.PushBack(3)
+	buf.PopFront()
+
+	if got := buf.Get(0); got != 2 {
+		t.Errorf("Get(0) after PopFront = %v, want 2", got)
+	}
+	if got := buf.Get(1); got != 3 {
+		t.Errorf("Get(1) after PopFront = %v, want 3", got)
+	}
+}
+
+func TestGet_AfterPopBack(t *testing.T) {
+	buf := New[int](5)
+	buf.PushBack(1)
+	buf.PushBack(2)
+	buf.PushBack(3)
+	buf.PopBack()
+
+	if got := buf.Get(0); got != 1 {
+		t.Errorf("Get(0) after PopBack = %v, want 1", got)
+	}
+	if got := buf.Get(1); got != 2 {
+		t.Errorf("Get(1) after PopBack = %v, want 2", got)
+	}
+}
+
+func TestGet_LargeBuffer(t *testing.T) {
+	buf := New[int](1000)
+	for i := 0; i < 1000; i++ {
+		buf.PushBack(i)
+	}
+
+	for i := 0; i < 1000; i++ {
+		if got := buf.Get(i); got != i {
+			t.Errorf("Get(%d) = %v, want %d", i, got, i)
+		}
+	}
+}
+
+func TestBinarySearch(t *testing.T) {
+	// Helper function to create and populate a buffer
+	createBuffer := func(elements ...int) *Buffer[int] {
+		buf := New[int](len(elements))
+		for _, e := range elements {
+			buf.PushBack(e)
+		}
+		return buf
+	}
+
+	t.Run("Found in middle", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 5 - v
+		})
+		if !found || index != 2 {
+			t.Errorf("Expected (2, true), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Found at beginning", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 1 - v
+		})
+		if !found || index != 0 {
+			t.Errorf("Expected (0, true), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Found at end", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 9 - v
+		})
+		if !found || index != 4 {
+			t.Errorf("Expected (4, true), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Not found - between elements", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 4 - v
+		})
+		if found || index != 2 {
+			t.Errorf("Expected (2, false), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Not found - less than all", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 0 - v
+		})
+		if found || index != 0 {
+			t.Errorf("Expected (0, false), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Not found - greater than all", func(t *testing.T) {
+		buf := createBuffer(1, 3, 5, 7, 9)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 10 - v
+		})
+		if found || index != 5 {
+			t.Errorf("Expected (5, false), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Single element - found", func(t *testing.T) {
+		buf := createBuffer(5)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 5 - v
+		})
+		if !found || index != 0 {
+			t.Errorf("Expected (0, true), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Single element - not found", func(t *testing.T) {
+		buf := createBuffer(5)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 3 - v
+		})
+		if found || index != 0 {
+			t.Errorf("Expected (0, false), got (%d, %v)", index, found)
+		}
+	})
+
+	t.Run("Duplicate elements", func(t *testing.T) {
+		buf := createBuffer(1, 3, 3, 3, 5)
+		index, found := buf.BinarySearch(buf.Len(), func(v int) int {
+			return 3 - v
+		})
+		if !found || index < 1 || index > 3 {
+			t.Errorf("Expected (1-3, true), got (%d, %v)", index, found)
+		}
+	})
 }

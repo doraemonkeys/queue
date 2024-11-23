@@ -1,9 +1,11 @@
 package heap
 
 import (
-	"github.com/doraemonkeys/queue"
 	"reflect"
+	"slices"
 	"testing"
+
+	"github.com/doraemonkeys/queue"
 )
 
 func TestIsHeap(t *testing.T) {
@@ -239,6 +241,40 @@ func TestPushHeapTopKWithLargeK(t *testing.T) {
 		heap[i] = 1000 - i
 	}
 	MakeHeap(heap, func(a, b int) bool { return a < b })
+
+	if !IsHeap(heap, func(a, b int) bool { return a < b }) {
+		t.Errorf("Result is not a valid heap")
+	}
+
+	PushHeapTopK(&heap, 500, func(a, b int) bool { return a < b }, 2000)
+
+	if len(heap) != 1001 {
+		t.Errorf("Expected heap length to be 1001, got %d", len(heap))
+	}
+
+	if !IsHeap(heap, func(a, b int) bool { return a < b }) {
+		t.Errorf("Result is not a valid heap")
+	}
+
+	// Check if 500 is in the heap
+	found := false
+	for _, v := range heap {
+		if v == 500 {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected 500 to be in the heap")
+	}
+}
+
+func TestPushHeapTopKWithLargeK2(t *testing.T) {
+	heap := make([]int, 1000)
+	for i := 0; i < 1000; i++ {
+		heap[i] = 1000 - i
+	}
+	MakeHeapOrdered(heap, func(a, b int) bool { return a < b })
 
 	if !IsHeap(heap, func(a, b int) bool { return a < b }) {
 		t.Errorf("Result is not a valid heap")
@@ -585,4 +621,105 @@ func TestPushHeapTopK4(t *testing.T) {
 			t.Errorf("Expected false and [1,3,5], got %v", h)
 		}
 	})
+}
+
+func TestXXX(t *testing.T) {
+	t.Run("Custom compare function", func(t *testing.T) {
+		h := []int{7, 3, 5}
+		less := func(a, b int) bool { return a > b } // max heap
+		MakeHeapOrdered(h, less)
+		PushHeapTopK(&h, 8, less, 3)
+		if len(h) != 3 || h[0] != 7 || !IsHeap(h, less) {
+			t.Errorf("Expected [8,7,5], got %v", h)
+		}
+	})
+
+	t.Run("k = len(heap)", func(t *testing.T) {
+		h := []int{3, 7, 5}
+		less := func(a, b int) bool { return a < b }
+		MakeHeapOrdered(h, less)
+		PushHeapTopK(&h, 4, less, 3)
+		if len(h) != 3 || !IsHeap(h, less) {
+			t.Errorf("Expected heap of length 3, got %v", h)
+		}
+	})
+
+	t.Run("Full heap, add equal to min", func(t *testing.T) {
+		h := []int{1, 3, 5}
+		less := func(a, b int) bool { return a < b }
+		MakeHeapOrdered(h, less)
+		PushHeapTopK(&h, 1, less, 3)
+		if len(h) != 3 || h[0] != 1 || !IsHeap(h, less) {
+			t.Errorf("Expected false and [1,3,5], got %v", h)
+		}
+	})
+}
+
+func TestMakeHeapOrdered(t *testing.T) {
+	tests := []struct {
+		name     string
+		heap     []int
+		less     queue.LessFn[int]
+		expected []int
+	}{
+		{
+			name: "Empty heap",
+			heap: []int{},
+			less: func(a, b int) bool { return a < b },
+		},
+		{
+			name:     "Heap with one element",
+			heap:     []int{1},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{1},
+		},
+		{
+			name:     "Heap with multiple elements",
+			heap:     []int{3, 1, 2},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{1, 2, 3},
+		},
+		{
+			name:     "Heap with negative numbers",
+			heap:     []int{-3, -1, -2},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{-3, -2, -1},
+		},
+		{
+			name:     "Heap with mixed numbers",
+			heap:     []int{3, -1, 2},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{-1, 2, 3},
+		},
+		{
+			name:     "Heap with large numbers",
+			heap:     []int{1000000, 1000001, 1000002},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{1000000, 1000001, 1000002},
+		},
+		{
+			name:     "max heap",
+			heap:     []int{3, 1, 2},
+			less:     func(a, b int) bool { return a > b },
+			expected: []int{3, 2, 1},
+		},
+		{
+			name:     "heap with 11 elements",
+			heap:     []int{1, 2, 3, 5, 4, 6, 7, 10, 11, 8, 9},
+			less:     func(a, b int) bool { return a < b },
+			expected: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			MakeHeapOrdered(tt.heap, tt.less)
+			if !slices.Equal(tt.heap, tt.expected) {
+				t.Errorf("Expected %v, got %v", tt.expected, tt.heap)
+			}
+			if !IsHeap(tt.heap, tt.less) {
+				t.Errorf("Result is not a valid heap: %v", tt.heap)
+			}
+		})
+	}
 }

@@ -1,6 +1,8 @@
 package heap
 
 import (
+	"sort"
+
 	"github.com/doraemonkeys/queue"
 )
 
@@ -17,6 +19,13 @@ func MakeHeap[T any](array []T, less queue.LessFn[T]) {
 	for i := n/2 - 1; i >= 0; i-- {
 		heapDown(array, i, n, less)
 	}
+}
+
+// MakeHeapOrdered sorts the array in ascending order according to less.
+func MakeHeapOrdered[T any](array []T, less queue.LessFn[T]) {
+	sort.Slice(array, func(i, j int) bool {
+		return less(array[i], array[j])
+	})
 }
 
 // IsHeap checks whether the elements in slice array are a min heap (accord to less).
@@ -55,6 +64,18 @@ func PopHeap[T any](heap *[]T, less queue.LessFn[T]) T {
 	heapDown(h, 0, n, less)
 	*heap = h[0:n]
 	return h[n]
+}
+
+// PopOrderedHeap removes and returns the minimum (according to less) element from the ordered heap.
+//
+// Note: This function will not release the memory of the removed element.
+//
+// Complexity: O(1).
+func PopOrderedHeap[T any](heap *[]T) T {
+	h := *heap
+	res := h[0]
+	*heap = h[1:]
+	return res
 }
 
 // PushHeapTopK pushes an element v into the heap, keeping the top k elements.
